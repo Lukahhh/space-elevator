@@ -26,6 +26,21 @@ remote.add_interface("space_elevator", {
     local stage = elevator_data.construction_stage or 1
     local is_complete = stage >= construction_stages.STAGE_COMPLETE
 
+    -- Hidden state tracking labels for detecting changes in update callback
+    local state_label = container.add{
+      type = "label",
+      name = "elevator_displayed_stage",
+      caption = tostring(stage),
+    }
+    state_label.visible = false
+
+    local constructing_label = container.add{
+      type = "label",
+      name = "elevator_displayed_constructing",
+      caption = elevator_data.is_constructing and "true" or "false",
+    }
+    constructing_label.visible = false
+
     -- Create tabbed interface
     local _, tabs = remote.call("entity_gui_lib", "create_tabs", container, {
       {name = "construction", caption = is_complete and "Status" or "Construction"},
@@ -260,7 +275,25 @@ remote.add_interface("space_elevator", {
     if not elevator_data then return end
 
     local stage = elevator_data.construction_stage or 1
-    if not construction_stages.STAGE_COMPLETE or stage >= construction_stages.STAGE_COMPLETE then return end
+    local is_complete = stage >= construction_stages.STAGE_COMPLETE
+
+    -- Check if GUI state matches current state - if not, do a full refresh
+    -- Look for the stage indicator label we added to detect mismatches
+    local displayed_stage_label = content["elevator_displayed_stage"]
+    if displayed_stage_label then
+      local displayed_stage = tonumber(displayed_stage_label.caption) or 0
+      local displayed_constructing = content["elevator_displayed_constructing"]
+      local was_constructing = displayed_constructing and displayed_constructing.caption == "true"
+
+      -- Refresh if stage changed OR construction state changed
+      if displayed_stage ~= stage or was_constructing ~= elevator_data.is_constructing then
+        remote.call("entity_gui_lib", "refresh", player.index)
+        return
+      end
+    end
+
+    -- If complete, nothing to update
+    if is_complete then return end
 
     -- Update progress bars
     for _, child in pairs(content.children) do
