@@ -448,12 +448,14 @@ remote.add_interface("space_elevator", {
         -- Elevator inventory summary
         transfer_flow.add{
           type = "label",
+          name = "elevator_surface_storage_label",
           caption = {"", "Surface Storage: ", status.elevator.used_slots, "/", status.elevator.total_slots, " slots used"},
         }
 
         -- Dock inventory summary
         transfer_flow.add{
           type = "label",
+          name = "elevator_dock_storage_label",
           caption = {"", "Platform Dock: ", status.dock.used_slots, "/", status.dock.total_slots, " slots used"},
         }
 
@@ -548,6 +550,7 @@ remote.add_interface("space_elevator", {
         end
         transfer_flow.add{
           type = "label",
+          name = "elevator_surface_fluid_label",
           caption = {"", "Surface Tank: ", elevator_fluid_text},
         }
 
@@ -562,6 +565,7 @@ remote.add_interface("space_elevator", {
         end
         transfer_flow.add{
           type = "label",
+          name = "elevator_dock_fluid_label",
           caption = {"", "Platform Tank: ", dock_fluid_text},
         }
 
@@ -750,10 +754,75 @@ remote.add_interface("space_elevator", {
       end
     end
 
-    -- If complete, nothing to update
-    if is_complete then return end
+    -- Helper to recursively find element by name
+    local function find_element(parent, name)
+      if not parent then return nil end
+      if parent.name == name then return parent end
+      if parent.children then
+        for _, child in pairs(parent.children) do
+          local found = find_element(child, name)
+          if found then return found end
+        end
+      end
+      -- Check tabs in tabbed pane (must check type first - accessing .tabs on non-tabbed-pane errors)
+      if parent.type == "tabbed-pane" and parent.tabs then
+        for _, tab in pairs(parent.tabs) do
+          if tab.content then
+            local found = find_element(tab.content, name)
+            if found then return found end
+          end
+        end
+      end
+      return nil
+    end
 
-    -- Update progress bars
+    -- Update Transfer tab labels when operational
+    if is_complete then
+      local status = transfer_controller.get_inventory_status(elevator_data)
+      local fluid_status = transfer_controller.get_fluid_status(elevator_data)
+
+      -- Update item storage labels
+      local surface_label = find_element(content, "elevator_surface_storage_label")
+      if surface_label then
+        surface_label.caption = {"", "Surface Storage: ", status.elevator.used_slots, "/", status.elevator.total_slots, " slots used"}
+      end
+
+      local dock_label = find_element(content, "elevator_dock_storage_label")
+      if dock_label then
+        dock_label.caption = {"", "Platform Dock: ", status.dock.used_slots, "/", status.dock.total_slots, " slots used"}
+      end
+
+      -- Update fluid labels
+      local elevator_fluid_text = "No tank found (rebuild elevator)"
+      if fluid_status.elevator.has_tank then
+        if fluid_status.elevator.fluid then
+          elevator_fluid_text = fluid_status.elevator.fluid .. ": " .. fluid_status.elevator.amount .. " / " .. fluid_status.elevator.capacity
+        else
+          elevator_fluid_text = "Empty (0 / " .. fluid_status.elevator.capacity .. ")"
+        end
+      end
+      local surface_fluid_label = find_element(content, "elevator_surface_fluid_label")
+      if surface_fluid_label then
+        surface_fluid_label.caption = {"", "Surface Tank: ", elevator_fluid_text}
+      end
+
+      local dock_fluid_text = "No tank near dock (place within 5 tiles)"
+      if fluid_status.dock.has_tank then
+        if fluid_status.dock.fluid then
+          dock_fluid_text = fluid_status.dock.fluid .. ": " .. fluid_status.dock.amount .. " / " .. fluid_status.dock.capacity
+        else
+          dock_fluid_text = "Empty (0 / " .. fluid_status.dock.capacity .. ")"
+        end
+      end
+      local dock_fluid_label = find_element(content, "elevator_dock_fluid_label")
+      if dock_fluid_label then
+        dock_fluid_label.caption = {"", "Platform Tank: ", dock_fluid_text}
+      end
+
+      return
+    end
+
+    -- Update progress bars (during construction)
     for _, child in pairs(content.children) do
       if child.type == "tabbed-pane" then
         for _, tab in pairs(child.tabs) do
@@ -1083,7 +1152,7 @@ script.on_event(defines.events.on_gui_click, function(event)
         else
           player.print("[Space Elevator] No items to upload")
         end
-        remote.call("entity_gui_lib", "refresh", event.player_index)
+        -- Don't refresh - causes tab to reset. GUI auto-updates every 20 ticks.
       end
     end
 
@@ -1101,7 +1170,7 @@ script.on_event(defines.events.on_gui_click, function(event)
         else
           player.print("[Space Elevator] No items to download")
         end
-        remote.call("entity_gui_lib", "refresh", event.player_index)
+        -- Don't refresh - causes tab to reset. GUI auto-updates every 20 ticks.
       end
     end
 
@@ -1110,7 +1179,7 @@ script.on_event(defines.events.on_gui_click, function(event)
     if entity and entity.valid then
       transfer_controller.set_auto_transfer(entity.unit_number, "off")
       player.print("[Space Elevator] Auto-transfer disabled")
-      remote.call("entity_gui_lib", "refresh", event.player_index)
+      -- Don't refresh - causes tab to reset. GUI auto-updates every 20 ticks.
     end
 
   elseif element.name == "elevator_auto_up" then
@@ -1118,7 +1187,7 @@ script.on_event(defines.events.on_gui_click, function(event)
     if entity and entity.valid then
       transfer_controller.set_auto_transfer(entity.unit_number, "up", 10)
       player.print("[Space Elevator] Auto-upload enabled")
-      remote.call("entity_gui_lib", "refresh", event.player_index)
+      -- Don't refresh - causes tab to reset. GUI auto-updates every 20 ticks.
     end
 
   elseif element.name == "elevator_auto_down" then
@@ -1126,7 +1195,7 @@ script.on_event(defines.events.on_gui_click, function(event)
     if entity and entity.valid then
       transfer_controller.set_auto_transfer(entity.unit_number, "down", 10)
       player.print("[Space Elevator] Auto-download enabled")
-      remote.call("entity_gui_lib", "refresh", event.player_index)
+      -- Don't refresh - causes tab to reset. GUI auto-updates every 20 ticks.
     end
 
   elseif element.name == "elevator_fluid_up" then
@@ -1143,7 +1212,7 @@ script.on_event(defines.events.on_gui_click, function(event)
         else
           player.print("[Space Elevator] No fluid to upload")
         end
-        remote.call("entity_gui_lib", "refresh", event.player_index)
+        -- Don't refresh - causes tab to reset. GUI auto-updates every 20 ticks.
       end
     end
 
@@ -1161,7 +1230,7 @@ script.on_event(defines.events.on_gui_click, function(event)
         else
           player.print("[Space Elevator] No fluid to download")
         end
-        remote.call("entity_gui_lib", "refresh", event.player_index)
+        -- Don't refresh - causes tab to reset. GUI auto-updates every 20 ticks.
       end
     end
 

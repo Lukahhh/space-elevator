@@ -137,6 +137,18 @@ end
 -- Combined Inventory View (for GUI)
 -- ============================================================================
 
+-- Helper to count actual used slots in an inventory
+local function count_used_slots(inventory)
+  if not inventory then return 0 end
+  local used = 0
+  for i = 1, #inventory do
+    if inventory[i].valid_for_read then
+      used = used + 1
+    end
+  end
+  return used
+end
+
 -- Get combined view of both inventories for GUI display
 function transfer_controller.get_inventory_status(elevator_data)
   local status = {
@@ -148,10 +160,10 @@ function transfer_controller.get_inventory_status(elevator_data)
   local elevator_inv = get_elevator_inventory(elevator_data)
   if elevator_inv then
     status.elevator.total_slots = #elevator_inv
+    status.elevator.used_slots = count_used_slots(elevator_inv)
     local contents = elevator_inv.get_contents()
     for _, item in pairs(contents) do
       status.elevator.items[item.name] = item.count
-      status.elevator.used_slots = status.elevator.used_slots + 1
     end
   end
 
@@ -160,10 +172,10 @@ function transfer_controller.get_inventory_status(elevator_data)
     local dock_inv = get_dock_inventory(elevator_data)
     if dock_inv then
       status.dock.total_slots = #dock_inv
+      status.dock.used_slots = count_used_slots(dock_inv)
       local contents = dock_inv.get_contents()
       for _, item in pairs(contents) do
         status.dock.items[item.name] = item.count
-        status.dock.used_slots = status.dock.used_slots + 1
       end
     end
   end
