@@ -200,8 +200,10 @@ remote.add_interface("space_elevator", {
           inventory = inventory,
           columns = 10,
           show_empty = true,
+          interactive = true,  -- Enable click-to-transfer
           mod_name = "space_elevator",
           on_click = "on_inventory_click",
+          on_transfer = "on_inventory_transfer",
         })
       else
         tabs.materials.add{
@@ -214,7 +216,7 @@ remote.add_interface("space_elevator", {
       -- Tip about inserting materials
       tabs.materials.add{
         type = "label",
-        caption = "Tip: Close this GUI to access the vanilla inventory slots, or use inserters.",
+        caption = "Click slots to insert/remove items, or use inserters.",
       }.style.top_margin = 8
     end
 
@@ -292,12 +294,15 @@ remote.add_interface("space_elevator", {
     elevator_controller.start_construction(unit_number)
   end,
 
-  -- Handle inventory slot clicks (for future use)
+  -- Handle inventory slot clicks
   on_inventory_click = function(player, slot_index, item_stack, data)
-    -- Currently just informational - could add item transfer in future
-    if item_stack then
-      player.print("[Space Elevator] Slot " .. slot_index .. ": " .. item_stack.name .. " x" .. item_stack.count)
-    end
+    -- Informational only - actual transfers handled by on_inventory_transfer
+  end,
+
+  -- Handle inventory transfers (called after items are moved)
+  on_inventory_transfer = function(player, slot_index, item_stack, data)
+    -- Refresh the GUI to update material counts
+    remote.call("entity_gui_lib", "refresh", player.index)
   end,
 })
 
