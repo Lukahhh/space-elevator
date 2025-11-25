@@ -1,4 +1,24 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.0
+Date: 2025-11-26
+  Features:
+    - Platform Docking Station - New entity for space platforms to connect with planetary elevators
+    - Bidirectional item transfer between surface and platform (Upload/Download)
+    - Automatic transfer modes (continuous upload or download)
+    - Fluid transfer support via companion fluid tanks (no barreling required)
+    - Player transport between surface and platform (3-second timed travel)
+    - New GUI tabs for operational elevators:
+        - Docking tab for platform selection and connection management
+        - Transfer tab for manual and automatic item transfers
+        - Travel tab for player teleportation between surface and platform
+    - Auto-connect to platforms when only one is orbiting
+    - Manual platform selection when multiple platforms are in orbit
+    - Connection validation - automatically disconnects when platform leaves orbit
+  New Items:
+    - Space Elevator Dock - Place on platforms to enable elevator connection
+    - Dock Fluid Tank - Fluid storage for platform-side transfers
+
+---------------------------------------------------------------------------------------------------
 Version: 0.1.0
 Date: 2025-11-26
   Features:

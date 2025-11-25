@@ -31,3 +31,42 @@ data:extend({
 -- Stage 3 (Tower Assembly): Processing Units, Electric Engines, LDS, Tungsten, Superconductors, Bioflux
 -- Stage 4 (Tether Deployment): Carbon Fiber, Supercapacitors, Rocket Fuel
 -- Stage 5 (Activation): Processing Units, Superconductors, Rocket Fuel
+
+-- ============================================================================
+-- Platform Docking Station Recipe (Phase 4)
+-- ============================================================================
+data:extend({
+  {
+    type = "recipe",
+    name = "space-elevator-dock",
+    enabled = false,  -- Unlocked via technology (same as space elevator)
+    energy_required = 10,  -- 10 seconds to craft
+    ingredients = {
+      -- Late-game materials for platform-side dock
+      {type = "item", name = "steel-plate", amount = 100},
+      {type = "item", name = "processing-unit", amount = 50},
+      {type = "item", name = "low-density-structure", amount = 20},
+      {type = "item", name = "superconductor", amount = 10},
+    },
+    results = {
+      {type = "item", name = "space-elevator-dock", amount = 1}
+    },
+    category = "crafting",
+  },
+  -- Dock Fluid Tank (Phase 4.5)
+  {
+    type = "recipe",
+    name = "space-elevator-dock-fluid-tank",
+    enabled = false,
+    energy_required = 5,
+    ingredients = {
+      {type = "item", name = "steel-plate", amount = 50},
+      {type = "item", name = "iron-plate", amount = 20},
+      {type = "item", name = "pipe", amount = 10},
+    },
+    results = {
+      {type = "item", name = "space-elevator-dock-fluid-tank", amount = 1}
+    },
+    category = "crafting",
+  }
+})

@@ -142,6 +142,24 @@ local function spawn_construction_chest(entity)
   return chest
 end
 
+-- Spawn companion fluid tank for fluid transfers (Phase 4.5)
+local function spawn_fluid_tank(entity)
+  if not entity or not entity.valid then return nil end
+
+  -- Create invisible fluid tank at same position
+  local tank = entity.surface.create_entity{
+    name = "space-elevator-fluid-tank",
+    position = entity.position,
+    force = entity.force,
+  }
+
+  if tank then
+    tank.destructible = false
+  end
+
+  return tank
+end
+
 -- Register an untracked elevator (e.g., spawned via command or from older saves)
 function elevator_controller.register_elevator(entity)
   if not entity or not entity.valid then return nil end
@@ -159,11 +177,14 @@ function elevator_controller.register_elevator(entity)
 
   -- Spawn companion chest for construction materials
   local chest = spawn_construction_chest(entity)
+  -- Spawn companion fluid tank for fluid transfers
+  local fluid_tank = spawn_fluid_tank(entity)
 
   -- Create elevator data
   local elevator_data = {
     entity = entity,
     chest = chest,  -- Link to companion chest
+    fluid_tank = fluid_tank,  -- Link to companion fluid tank (Phase 4.5)
     surface = surface_name,
     position = entity.position,
     unit_number = entity.unit_number,
@@ -172,6 +193,11 @@ function elevator_controller.register_elevator(entity)
     is_constructing = false,
     is_operational = false,
     launch_count = 0,
+    -- Phase 4: Docking fields
+    docked_platform_index = nil,
+    docked_platform_name = nil,
+    connection_status = "disconnected",
+    docked_dock_entity = nil,
   }
 
   table.insert(storage.space_elevators, elevator_data)
@@ -207,11 +233,14 @@ function elevator_controller.on_elevator_built(event)
 
   -- Spawn companion chest for construction materials
   local chest = spawn_construction_chest(entity)
+  -- Spawn companion fluid tank for fluid transfers
+  local fluid_tank = spawn_fluid_tank(entity)
 
   -- Store elevator reference with construction state
   table.insert(storage.space_elevators, {
     entity = entity,
     chest = chest,  -- Link to companion chest
+    fluid_tank = fluid_tank,  -- Link to companion fluid tank (Phase 4.5)
     surface = surface_name,
     position = entity.position,
     unit_number = entity.unit_number,
@@ -221,6 +250,11 @@ function elevator_controller.on_elevator_built(event)
     is_constructing = false,
     is_operational = false,
     launch_count = 0,
+    -- Phase 4: Docking fields
+    docked_platform_index = nil,
+    docked_platform_name = nil,
+    connection_status = "disconnected",
+    docked_dock_entity = nil,
   })
 
   game.print("[Space Elevator] Construction site established on " .. surface_name .. ". Begin stage 1: Site Preparation")
@@ -254,6 +288,12 @@ function elevator_controller.on_elevator_removed(event)
       end
     end
     elevator_data.chest.destroy()
+  end
+
+  -- Remove companion fluid tank if it exists (Phase 4.5)
+  if elevator_data and elevator_data.fluid_tank and elevator_data.fluid_tank.valid then
+    -- Fluids are lost when elevator is removed (no spill mechanic for fluids)
+    elevator_data.fluid_tank.destroy()
   end
 
   -- Update count
