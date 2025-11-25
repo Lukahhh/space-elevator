@@ -143,13 +143,21 @@ local function spawn_construction_chest(entity)
 end
 
 -- Spawn companion fluid tank for fluid transfers (Phase 4.5)
+-- Tank is positioned outside the elevator footprint so pipes can connect
 local function spawn_fluid_tank(entity)
   if not entity or not entity.valid then return nil end
 
-  -- Create invisible fluid tank at same position
+  -- Rocket silo is ~9x9 tiles. Position tank at the north edge (offset by 6 tiles)
+  -- This puts the tank just outside the silo's collision box for easy pipe access
+  local tank_position = {
+    x = entity.position.x,
+    y = entity.position.y - 6,  -- North of elevator
+  }
+
+  -- Create fluid tank at offset position (visible so player can connect pipes)
   local tank = entity.surface.create_entity{
     name = "space-elevator-fluid-tank",
-    position = entity.position,
+    position = tank_position,
     force = entity.force,
   }
 

@@ -1,4 +1,22 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.1
+Date: 2025-11-26
+  Features:
+    - Debug button to skip construction (for testing) - appears in Construction tab
+    - Fluid transfer UI in Transfer tab with status display and manual transfer buttons
+    - Custom GUI for Space Elevator Dock showing all 48 inventory slots
+  Changes:
+    - Elevator fluid tank now spawns 6 tiles north of elevator (visible, accessible for pipes)
+    - Materials tab now shows interactive inventory when elevator is operational
+    - Improved fluid status messages to distinguish between "no tank" and "empty tank"
+  Bugfixes:
+    - Fixed Materials tab not showing inventory after construction complete
+    - Fixed Factorio 2.0 inventory iteration (get_contents returns array not dictionary)
+    - Fixed dock inventory display only showing 10 slots instead of 48
+    - Fixed fluid transfer buttons not appearing in Transfer tab
+    - Fixed misleading "place Dock Fluid Tank" message when tank was empty
+
+---------------------------------------------------------------------------------------------------
 Version: 0.2.0
 Date: 2025-11-26
   Features:

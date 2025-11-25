@@ -147,19 +147,69 @@ remote.add_interface("space_elevator", {
           tooltip = can_start and "Start construction of current stage" or "Insert required materials first",
         }
       end
+
+      -- Debug button to skip construction (dev/testing only)
+      local debug_flow = tabs.construction.add{type = "flow", direction = "horizontal"}
+      debug_flow.style.top_margin = 20
+      debug_flow.add{
+        type = "button",
+        name = "elevator_debug_complete",
+        caption = "[DEBUG] Complete Construction",
+        style = "red_button",
+        tooltip = "Dev/testing only: Skip all construction stages and make elevator operational",
+      }
     end
 
     -- ========== Materials Tab ==========
     if is_complete then
+      -- Show cargo inventory for transfers when operational
       tabs.materials.add{
         type = "label",
-        caption = "Construction Complete",
+        caption = "Cargo Storage",
         style = "caption_label",
       }
       tabs.materials.add{
         type = "label",
-        caption = "The space elevator is fully operational.",
+        caption = "Items placed here can be transferred to connected platforms.",
       }.style.top_margin = 4
+
+      local chest = elevator_data.chest
+      local inventory = construction_stages.get_inventory(chest)
+
+      -- Show interactive inventory display
+      tabs.materials.add{
+        type = "label",
+        caption = "Inventory:",
+        style = "bold_label",
+      }.style.top_margin = 8
+
+      if inventory then
+        remote.call("entity_gui_lib", "create_inventory_display", tabs.materials, {
+          inventory = inventory,
+          columns = 10,
+          show_empty = true,
+          interactive = true,
+          mod_name = "space_elevator",
+          on_click = "on_inventory_click",
+          on_transfer = "on_inventory_transfer",
+        })
+
+        tabs.materials.add{
+          type = "label",
+          caption = "Click slots to insert/remove items, or use inserters.",
+        }.style.top_margin = 8
+
+        tabs.materials.add{
+          type = "label",
+          caption = "Use the Transfer tab to send items to connected platforms.",
+        }.style.top_margin = 4
+      else
+        tabs.materials.add{
+          type = "label",
+          caption = "[No accessible inventory]",
+          style = "bold_red_label",
+        }
+      end
     else
       local stage_info = construction_stages.get_stage(stage)
       tabs.materials.add{
@@ -472,6 +522,81 @@ remote.add_interface("space_elevator", {
             caption = {"", "Auto-transfer active: ", current_mode == "up" and "Uploading" or "Downloading"},
           }.style.top_margin = 4
         end
+
+        -- ========== Fluid Transfer Section ==========
+        transfer_flow.add{
+          type = "line",
+        }.style.top_margin = 12
+
+        transfer_flow.add{
+          type = "label",
+          caption = "Fluid Transfer",
+          style = "caption_label",
+        }.style.top_margin = 8
+
+        -- Get fluid status
+        local fluid_status = transfer_controller.get_fluid_status(elevator_data)
+
+        -- Elevator fluid tank status
+        local elevator_fluid_text = "No tank found (rebuild elevator)"
+        if fluid_status.elevator.has_tank then
+          if fluid_status.elevator.fluid then
+            elevator_fluid_text = fluid_status.elevator.fluid .. ": " .. fluid_status.elevator.amount .. " / " .. fluid_status.elevator.capacity
+          else
+            elevator_fluid_text = "Empty (0 / " .. fluid_status.elevator.capacity .. ")"
+          end
+        end
+        transfer_flow.add{
+          type = "label",
+          caption = {"", "Surface Tank: ", elevator_fluid_text},
+        }
+
+        -- Dock fluid tank status
+        local dock_fluid_text = "No tank near dock (place within 5 tiles)"
+        if fluid_status.dock.has_tank then
+          if fluid_status.dock.fluid then
+            dock_fluid_text = fluid_status.dock.fluid .. ": " .. fluid_status.dock.amount .. " / " .. fluid_status.dock.capacity
+          else
+            dock_fluid_text = "Empty (0 / " .. fluid_status.dock.capacity .. ")"
+          end
+        end
+        transfer_flow.add{
+          type = "label",
+          caption = {"", "Platform Tank: ", dock_fluid_text},
+        }
+
+        -- Manual fluid transfer buttons
+        transfer_flow.add{
+          type = "label",
+          caption = "Manual Fluid Transfer:",
+          style = "bold_label",
+        }.style.top_margin = 8
+
+        local fluid_manual_flow = transfer_flow.add{type = "flow", direction = "horizontal"}
+        fluid_manual_flow.style.horizontal_spacing = 8
+
+        local can_upload_fluid = fluid_status.elevator.fluid ~= nil
+        local can_download_fluid = fluid_status.dock.fluid ~= nil
+
+        fluid_manual_flow.add{
+          type = "button",
+          name = "elevator_fluid_up",
+          caption = "Upload 1000",
+          tooltip = "Transfer 1000 fluid from surface to platform",
+          enabled = can_upload_fluid,
+        }
+        fluid_manual_flow.add{
+          type = "button",
+          name = "elevator_fluid_down",
+          caption = "Download 1000",
+          tooltip = "Transfer 1000 fluid from platform to surface",
+          enabled = can_download_fluid,
+        }
+
+        transfer_flow.add{
+          type = "label",
+          caption = "Connect pipes to the fluid tank north of the elevator.",
+        }.style.top_margin = 4
       end
     end
 
@@ -673,6 +798,77 @@ remote.add_interface("space_elevator", {
     -- Refresh the GUI to update material counts
     remote.call("entity_gui_lib", "refresh", player.index)
   end,
+
+  -- ========== Dock GUI Functions ==========
+  build_dock_gui = function(container, entity, player)
+    container.add{
+      type = "label",
+      caption = "Platform Docking Station",
+      style = "caption_label",
+    }
+
+    -- Connection status
+    local dock_data = platform_controller.get_dock_data(entity.unit_number)
+    local connected_elevator = nil
+    if dock_data and dock_data.connected_elevator_unit_number then
+      for _, elevator_data in pairs(storage.space_elevators or {}) do
+        if elevator_data.unit_number == dock_data.connected_elevator_unit_number then
+          connected_elevator = elevator_data
+          break
+        end
+      end
+    end
+
+    local status_flow = container.add{type = "flow", direction = "vertical"}
+    status_flow.style.top_margin = 8
+
+    if connected_elevator then
+      local status_label = status_flow.add{
+        type = "label",
+        caption = "Connected to surface elevator",
+      }
+      status_label.style.font_color = {0, 1, 0}
+    else
+      local status_label = status_flow.add{
+        type = "label",
+        caption = "Not connected",
+      }
+      status_label.style.font_color = {1, 0.5, 0}
+    end
+
+    -- Inventory display
+    container.add{
+      type = "label",
+      caption = "Dock Inventory:",
+      style = "bold_label",
+    }.style.top_margin = 12
+
+    local inventory = entity.get_inventory(defines.inventory.chest)
+    if inventory then
+      remote.call("entity_gui_lib", "create_inventory_display", container, {
+        inventory = inventory,
+        columns = 12,
+        show_empty = true,
+        interactive = true,
+        mod_name = "space_elevator",
+        on_click = "on_inventory_click",
+        on_transfer = "on_inventory_transfer",
+      })
+    end
+
+    container.add{
+      type = "label",
+      caption = "Items here can be transferred to the surface via connected elevator.",
+    }.style.top_margin = 8
+  end,
+
+  update_dock_gui = function(content, entity, player)
+    -- No live updates needed for dock
+  end,
+
+  close_dock_gui = function(entity, player)
+    -- Optional cleanup
+  end,
 })
 
 -- ============================================================================
@@ -680,6 +876,7 @@ remote.add_interface("space_elevator", {
 -- ============================================================================
 local function register_gui()
   if remote.interfaces["entity_gui_lib"] then
+    -- Register elevator GUI
     remote.call("entity_gui_lib", "register", {
       mod_name = "space_elevator",
       entity_name = "space-elevator",
@@ -690,6 +887,19 @@ local function register_gui()
       update_interval = 20,  -- Update every 20 ticks (~3 times/sec)
       show_player_inventory = true,  -- Shows player inventory panel on the right
     })
+
+    -- Register dock GUI
+    remote.call("entity_gui_lib", "register", {
+      mod_name = "space_elevator",
+      entity_name = "space-elevator-dock",
+      title = {"entity-name.space-elevator-dock"},
+      on_build = "build_dock_gui",
+      on_update = "update_dock_gui",
+      on_close = "close_dock_gui",
+      update_interval = 60,  -- Update every second
+      show_player_inventory = true,
+    })
+
     -- Enable debug mode to troubleshoot registration
     remote.call("entity_gui_lib", "set_debug_mode", true)
   end
@@ -765,6 +975,25 @@ script.on_event(defines.events.on_gui_click, function(event)
       elevator_controller.start_construction(entity.unit_number)
       -- Refresh the GUI
       remote.call("entity_gui_lib", "refresh", event.player_index)
+    end
+
+  elseif element.name == "elevator_debug_complete" then
+    -- Debug: Skip all construction and make elevator operational
+    local entity = remote.call("entity_gui_lib", "get_entity", event.player_index)
+    if entity and entity.valid then
+      local elevator_data = elevator_controller.get_elevator_data(entity.unit_number)
+      if elevator_data then
+        -- Set to complete state
+        elevator_data.construction_stage = construction_stages.STAGE_COMPLETE
+        elevator_data.is_constructing = false
+        elevator_data.construction_progress = 0
+        elevator_data.is_operational = true
+        elevator_data.launch_count = 0
+        -- Remove from constructing list if present
+        storage.elevators_constructing[entity.unit_number] = nil
+        player.print("[Space Elevator] DEBUG: Construction skipped - elevator is now operational!")
+        remote.call("entity_gui_lib", "refresh", event.player_index)
+      end
     end
 
   elseif element.name == "elevator_undock" then
@@ -898,6 +1127,42 @@ script.on_event(defines.events.on_gui_click, function(event)
       transfer_controller.set_auto_transfer(entity.unit_number, "down", 10)
       player.print("[Space Elevator] Auto-download enabled")
       remote.call("entity_gui_lib", "refresh", event.player_index)
+    end
+
+  elseif element.name == "elevator_fluid_up" then
+    -- Manual fluid upload
+    local entity = remote.call("entity_gui_lib", "get_entity", event.player_index)
+    if entity and entity.valid then
+      local elevator_data = elevator_controller.get_elevator_data(entity.unit_number)
+      if elevator_data then
+        local result = transfer_controller.transfer_fluids_up(elevator_data, 1000)
+        if result.transferred > 0 then
+          player.print("[Space Elevator] Uploaded " .. math.floor(result.transferred) .. " " .. (result.fluid_name or "fluid"))
+        elseif result.error then
+          player.print("[Space Elevator] " .. result.error)
+        else
+          player.print("[Space Elevator] No fluid to upload")
+        end
+        remote.call("entity_gui_lib", "refresh", event.player_index)
+      end
+    end
+
+  elseif element.name == "elevator_fluid_down" then
+    -- Manual fluid download
+    local entity = remote.call("entity_gui_lib", "get_entity", event.player_index)
+    if entity and entity.valid then
+      local elevator_data = elevator_controller.get_elevator_data(entity.unit_number)
+      if elevator_data then
+        local result = transfer_controller.transfer_fluids_down(elevator_data, 1000)
+        if result.transferred > 0 then
+          player.print("[Space Elevator] Downloaded " .. math.floor(result.transferred) .. " " .. (result.fluid_name or "fluid"))
+        elseif result.error then
+          player.print("[Space Elevator] " .. result.error)
+        else
+          player.print("[Space Elevator] No fluid to download")
+        end
+        remote.call("entity_gui_lib", "refresh", event.player_index)
+      end
     end
 
   elseif element.name == "elevator_travel_up" then

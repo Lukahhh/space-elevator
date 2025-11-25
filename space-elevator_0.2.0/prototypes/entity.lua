@@ -115,13 +115,13 @@ data:extend({docking_station})
 -- ============================================================================
 -- Companion Fluid Tank for Elevator (Phase 4.5)
 -- ============================================================================
--- This invisible tank spawns alongside the elevator for fluid transfers.
+-- This tank spawns north of the elevator for fluid transfers.
+-- Positioned outside the elevator footprint so pipes can connect.
 
 local elevator_fluid_tank = table.deepcopy(data.raw["storage-tank"]["storage-tank"])
 elevator_fluid_tank.name = "space-elevator-fluid-tank"
-elevator_fluid_tank.minable = nil  -- Cannot be mined separately
-elevator_fluid_tank.selectable_in_game = false
-elevator_fluid_tank.collision_mask = {layers = {}}  -- No collision
+elevator_fluid_tank.minable = nil  -- Cannot be mined separately (linked to elevator)
+elevator_fluid_tank.max_health = 500
 elevator_fluid_tank.fluid_box = {
   volume = 25000,  -- 25,000 units capacity
   pipe_connections = {
@@ -134,34 +134,10 @@ elevator_fluid_tank.fluid_box = {
 elevator_fluid_tank.localised_name = {"entity-name.space-elevator-fluid-tank"}
 elevator_fluid_tank.localised_description = {"entity-description.space-elevator-fluid-tank"}
 
--- Make it invisible
-elevator_fluid_tank.pictures = {
-  picture = {
-    filename = "__core__/graphics/empty.png",
-    width = 1,
-    height = 1,
-  },
-  window_background = {
-    filename = "__core__/graphics/empty.png",
-    width = 1,
-    height = 1,
-  },
-  fluid_background = {
-    filename = "__core__/graphics/empty.png",
-    width = 1,
-    height = 1,
-  },
-  flow_sprite = {
-    filename = "__core__/graphics/empty.png",
-    width = 1,
-    height = 1,
-  },
-  gas_flow = {
-    filename = "__core__/graphics/empty.png",
-    width = 1,
-    height = 1,
-  },
-}
+-- Use standard storage tank graphics (visible to player)
+-- Icon to help identify it
+elevator_fluid_tank.icon = "__base__/graphics/icons/storage-tank.png"
+elevator_fluid_tank.icon_size = 64
 
 data:extend({elevator_fluid_tank})
 

@@ -376,13 +376,14 @@ end
 -- Get fluid status for GUI
 function transfer_controller.get_fluid_status(elevator_data)
   local status = {
-    elevator = {fluid = nil, amount = 0, capacity = 25000},
-    dock = {fluid = nil, amount = 0, capacity = 25000},
+    elevator = {fluid = nil, amount = 0, capacity = 25000, has_tank = false},
+    dock = {fluid = nil, amount = 0, capacity = 25000, has_tank = false},
     connected = false,
   }
 
   local elevator_tank = get_elevator_fluid_tank(elevator_data)
   if elevator_tank then
+    status.elevator.has_tank = true
     local fluid = get_fluid_info(elevator_tank)
     if fluid then
       status.elevator.fluid = fluid.name
@@ -394,6 +395,7 @@ function transfer_controller.get_fluid_status(elevator_data)
     status.connected = true
     local dock_tank = get_dock_fluid_tank(elevator_data)
     if dock_tank then
+      status.dock.has_tank = true
       local fluid = get_fluid_info(dock_tank)
       if fluid then
         status.dock.fluid = fluid.name
