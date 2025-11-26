@@ -1154,8 +1154,8 @@ script.on_event(defines.events.on_robot_built_entity, function(event)
   elevator_controller.on_elevator_built(event)
 end, {{filter = "name", name = "space-elevator"}})
 
--- Track when space elevators are removed
-script.on_event(defines.events.on_player_mined_entity, function(event)
+-- Track when space elevators are removed (use pre-event for player to ensure entity is valid during cleanup)
+script.on_event(defines.events.on_pre_player_mined_item, function(event)
   elevator_controller.on_elevator_removed(event)
 end, {{filter = "name", name = "space-elevator"}})
 
