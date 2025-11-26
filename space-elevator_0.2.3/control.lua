@@ -528,6 +528,67 @@ remote.add_interface("space_elevator", {
           }.style.top_margin = 4
         end
 
+        -- ========== Transfer Rate Settings ==========
+        transfer_flow.add{
+          type = "label",
+          caption = "Transfer Rate:",
+          style = "bold_label",
+        }.style.top_margin = 12
+
+        -- Get current rate (default to 10 if not set)
+        local current_rate = elevator_data.transfer_rate or 10
+
+        -- Calculate energy cost per transfer (10kJ base per item, scales with rate)
+        local energy_per_item = 10000  -- 10kJ in joules
+        local energy_cost_kj = (current_rate * energy_per_item) / 1000  -- Convert to kJ
+
+        local rate_flow = transfer_flow.add{type = "flow", direction = "horizontal"}
+        rate_flow.style.horizontal_spacing = 8
+        rate_flow.style.vertical_align = "center"
+
+        -- Rate dropdown
+        local rate_options = {"10", "25", "50", "100", "250"}
+        local rate_values = {10, 25, 50, 100, 250}
+        local selected_idx = 1
+        for i, v in ipairs(rate_values) do
+          if v == current_rate then
+            selected_idx = i
+            break
+          end
+        end
+
+        rate_flow.add{
+          type = "drop-down",
+          name = "elevator_transfer_rate",
+          items = rate_options,
+          selected_index = selected_idx,
+          tooltip = "Items transferred per cycle (every 0.5 seconds)",
+        }
+
+        rate_flow.add{
+          type = "label",
+          caption = "items/cycle",
+        }
+
+        -- Show energy cost
+        transfer_flow.add{
+          type = "label",
+          name = "elevator_energy_cost_label",
+          caption = {"", "Energy cost: ", string.format("%.0f kJ", energy_cost_kj), " per transfer cycle"},
+        }
+
+        -- Show current energy level
+        local current_energy_kj = (entity.energy or 0) / 1000
+        local max_energy_kj = (entity.electric_buffer_size or 0) / 1000
+        local energy_label = transfer_flow.add{
+          type = "label",
+          name = "elevator_current_energy_label",
+          caption = {"", "Available: ", string.format("%.0f / %.0f kJ", current_energy_kj, max_energy_kj)},
+        }
+        if current_energy_kj < energy_cost_kj then
+          energy_label.style.font_color = {1, 0.3, 0.3}  -- Red when insufficient
+        end
+
         -- ========== Fluid Transfer Section ==========
         transfer_flow.add{
           type = "line",
@@ -823,6 +884,28 @@ remote.add_interface("space_elevator", {
         dock_fluid_label.caption = {"", "Platform Tank: ", dock_fluid_text}
       end
 
+      -- Update energy display
+      local current_rate = elevator_data.transfer_rate or 10
+      local energy_per_item = 10000  -- 10kJ in joules
+      local energy_cost_kj = (current_rate * energy_per_item) / 1000
+
+      local energy_cost_label = find_element(content, "elevator_energy_cost_label")
+      if energy_cost_label then
+        energy_cost_label.caption = {"", "Energy cost: ", string.format("%.0f kJ", energy_cost_kj), " per transfer cycle"}
+      end
+
+      local current_energy_kj = (entity.energy or 0) / 1000
+      local max_energy_kj = (entity.electric_buffer_size or 0) / 1000
+      local current_energy_label = find_element(content, "elevator_current_energy_label")
+      if current_energy_label then
+        current_energy_label.caption = {"", "Available: ", string.format("%.0f / %.0f kJ", current_energy_kj, max_energy_kj)}
+        if current_energy_kj < energy_cost_kj then
+          current_energy_label.style.font_color = {1, 0.3, 0.3}  -- Red when insufficient
+        else
+          current_energy_label.style.font_color = {1, 1, 1}  -- White when sufficient
+        end
+      end
+
       return
     end
 
@@ -1002,6 +1085,13 @@ script.on_configuration_changed(function(data)
   platform_controller.init_storage()
   transfer_controller.init_storage()
   player_transport.init_storage()
+
+  -- Migration: Add transfer_rate to existing elevators (v0.2.2+)
+  for _, elevator_data in pairs(storage.space_elevators) do
+    if elevator_data.transfer_rate == nil then
+      elevator_data.transfer_rate = 10  -- Default to 10 items/cycle
+    end
+  end
 end)
 
 -- ============================================================================
@@ -1191,18 +1281,20 @@ script.on_event(defines.events.on_gui_click, function(event)
   elseif element.name == "elevator_auto_up" then
     local entity = remote.call("entity_gui_lib", "get_entity", event.player_index)
     if entity and entity.valid then
-      local rate = settings.global["space-elevator-auto-transfer-rate"].value
+      local elevator_data = elevator_controller.get_elevator_data(entity.unit_number)
+      local rate = elevator_data and elevator_data.transfer_rate or 10
       transfer_controller.set_auto_transfer(entity.unit_number, "up", rate)
-      player.print("[Space Elevator] Auto-upload enabled")
+      player.print("[Space Elevator] Auto-upload enabled at " .. rate .. " items/cycle")
       -- Don't refresh - causes tab to reset. GUI auto-updates every 20 ticks.
     end
 
   elseif element.name == "elevator_auto_down" then
     local entity = remote.call("entity_gui_lib", "get_entity", event.player_index)
     if entity and entity.valid then
-      local rate = settings.global["space-elevator-auto-transfer-rate"].value
+      local elevator_data = elevator_controller.get_elevator_data(entity.unit_number)
+      local rate = elevator_data and elevator_data.transfer_rate or 10
       transfer_controller.set_auto_transfer(entity.unit_number, "down", rate)
-      player.print("[Space Elevator] Auto-download enabled")
+      player.print("[Space Elevator] Auto-download enabled at " .. rate .. " items/cycle")
       -- Don't refresh - causes tab to reset. GUI auto-updates every 20 ticks.
     end
 
@@ -1268,6 +1360,36 @@ script.on_event(defines.events.on_gui_click, function(event)
       remote.call("entity_gui_lib", "refresh", event.player_index)
     else
       player.print("[Space Elevator] Move closer to a dock connected to an elevator to travel")
+    end
+  end
+end)
+
+-- Handle dropdown selection changes
+script.on_event(defines.events.on_gui_selection_state_changed, function(event)
+  local element = event.element
+  if not element or not element.valid then return end
+  local player = game.get_player(event.player_index)
+  if not player then return end
+
+  if element.name == "elevator_transfer_rate" then
+    local entity = remote.call("entity_gui_lib", "get_entity", event.player_index)
+    if entity and entity.valid then
+      local elevator_data = elevator_controller.get_elevator_data(entity.unit_number)
+      if elevator_data then
+        -- Rate values corresponding to dropdown indices
+        local rate_values = {10, 25, 50, 100, 250}
+        local new_rate = rate_values[element.selected_index] or 10
+        elevator_data.transfer_rate = new_rate
+
+        -- Also update the active auto-transfer config if active
+        local auto_config = transfer_controller.get_auto_transfer(entity.unit_number)
+        if auto_config then
+          transfer_controller.set_auto_transfer(entity.unit_number, auto_config.mode, new_rate)
+        end
+
+        player.print("[Space Elevator] Transfer rate set to " .. new_rate .. " items/cycle")
+        -- Don't refresh - causes tab to reset. GUI auto-updates every 20 ticks.
+      end
     end
   end
 end)

@@ -1,4 +1,22 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.3
+Date: 2025-11-26
+  Features:
+    - Per-elevator transfer rate selector in Transfer tab
+        - Choose between 10, 25, 50, 100, or 250 items per transfer cycle
+        - Higher rates transfer more items but cost more energy
+        - Beam width scales with transfer rate for visual feedback
+    - Energy cost system for item transfers
+        - Each item transferred costs 10kJ of energy
+        - Energy cost displayed in Transfer tab GUI
+        - Live display of available vs required energy
+        - Transfers skip when energy is insufficient
+  Technical:
+    - Per-elevator transfer_rate storage with save migration
+    - Energy drain happens after transfer based on actual items moved
+    - GUI live refresh includes energy status updates
+
+---------------------------------------------------------------------------------------------------
 Version: 0.2.2
 Date: 2025-11-26
   Features:
@@ -11,10 +29,12 @@ Date: 2025-11-26
         - Fluid upload: Cyan/teal
         - Fluid download: Dark orange
     - Dynamic platform edge detection for accurate beam positioning
+    - Beam width scales with transfer amount (wider beams for more items)
   Technical:
     - New visual-effects.lua script module for rendering effects
     - Platform bottom edge caching (5-second cache) for performance
     - Beam rendering uses LuaRendering.draw_line with dual-layer effect (outer + inner core)
+    - Persistent beam management - beams stay visible during continuous transfers
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.2.1

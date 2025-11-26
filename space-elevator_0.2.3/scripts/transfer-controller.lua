@@ -230,6 +230,27 @@ function transfer_controller.get_auto_transfer(unit_number)
   return storage.active_transfers[unit_number]
 end
 
+-- Energy cost per item transferred (in joules)
+local ENERGY_PER_ITEM = 10000  -- 10kJ per item (reduced from 100kJ for better gameplay)
+
+-- Drain energy after transfer based on actual items transferred
+local function drain_energy_for_transfer(entity, items_transferred)
+  if not entity or not entity.valid or items_transferred <= 0 then return end
+
+  local energy_cost = items_transferred * ENERGY_PER_ITEM
+  local available_energy = entity.energy or 0
+
+  -- Drain what we can (don't go negative)
+  entity.energy = math.max(0, available_energy - energy_cost)
+end
+
+-- Check if entity has minimum energy to attempt transfer
+local function has_minimum_energy(entity)
+  if not entity or not entity.valid then return false end
+  -- Require at least enough energy for 1 item to attempt transfer
+  return (entity.energy or 0) >= ENERGY_PER_ITEM
+end
+
 -- Process automatic transfers (called from on_nth_tick)
 function transfer_controller.process_auto_transfers()
   storage.active_transfers = storage.active_transfers or {}
@@ -247,16 +268,30 @@ function transfer_controller.process_auto_transfers()
     end
 
     if elevator_data and elevator_data.is_operational then
-      if config.mode == "up" then
-        transfer_controller.transfer_items_up(elevator_data, nil, config.rate)
-      elseif config.mode == "down" then
-        transfer_controller.transfer_items_down(elevator_data, nil, config.rate)
-      elseif config.mode == "balanced" then
-        -- Transfer half each way for balanced mode
-        local half_rate = math.ceil(config.rate / 2)
-        transfer_controller.transfer_items_up(elevator_data, nil, half_rate)
-        transfer_controller.transfer_items_down(elevator_data, nil, half_rate)
+      local entity = elevator_data.entity
+
+      -- Check minimum energy before attempting transfer
+      if has_minimum_energy(entity) then
+        local total_transferred = 0
+
+        if config.mode == "up" then
+          local result = transfer_controller.transfer_items_up(elevator_data, nil, config.rate)
+          total_transferred = result.total or 0
+        elseif config.mode == "down" then
+          local result = transfer_controller.transfer_items_down(elevator_data, nil, config.rate)
+          total_transferred = result.total or 0
+        elseif config.mode == "balanced" then
+          -- Transfer half each way for balanced mode
+          local half_rate = math.ceil(config.rate / 2)
+          local up_result = transfer_controller.transfer_items_up(elevator_data, nil, half_rate)
+          local down_result = transfer_controller.transfer_items_down(elevator_data, nil, half_rate)
+          total_transferred = (up_result.total or 0) + (down_result.total or 0)
+        end
+
+        -- Drain energy based on actual items transferred
+        drain_energy_for_transfer(entity, total_transferred)
       end
+      -- If no energy, skip this transfer cycle silently
     else
       -- Remove invalid elevator from auto-transfer
       storage.active_transfers[unit_number] = nil

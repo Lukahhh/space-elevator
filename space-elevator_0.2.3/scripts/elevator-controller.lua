@@ -207,6 +207,8 @@ function elevator_controller.register_elevator(entity)
     docked_platform_name = nil,
     connection_status = "disconnected",
     docked_dock_entity = nil,
+    -- Phase 5: Per-elevator transfer rate (items per transfer tick)
+    transfer_rate = 10,  -- Default to 10 items per 0.5 second
   }
 
   table.insert(storage.space_elevators, elevator_data)
@@ -264,6 +266,8 @@ function elevator_controller.on_elevator_built(event)
     docked_platform_name = nil,
     connection_status = "disconnected",
     docked_dock_entity = nil,
+    -- Phase 5: Per-elevator transfer rate (items per transfer tick)
+    transfer_rate = 10,  -- Default to 10 items per 0.5 second
   })
 
   game.print("[Space Elevator] Construction site established on " .. surface_name .. ". Begin stage 1: Site Preparation")
