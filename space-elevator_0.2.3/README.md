@@ -23,8 +23,10 @@ Build your space elevator through 5 construction stages, each requiring material
 ### Bidirectional Item Transfer
 - **Upload** items from surface to platform
 - **Download** items from platform to surface
-- Manual transfers (10 items per click)
-- Automatic transfer modes for continuous operation
+- **Configurable transfer rate** - Choose 10, 25, 50, 100, or 250 items per cycle
+- Manual and automatic transfer modes
+- **Energy cost** - 10kJ per item transferred (higher rates = more power)
+- **Visual feedback** - Beam width scales with transfer rate
 - 48-slot cargo storage on both ends
 
 ### Fluid Transfer
@@ -76,9 +78,10 @@ Build your space elevator through 5 construction stages, each requiring material
 
 1. Insert items into the elevator's cargo storage (Materials tab)
 2. Go to the **Transfer** tab
-3. Click **Upload 10** to send items to the platform dock
-4. Click **Download 10** to receive items from the platform
+3. **Set transfer rate** using the dropdown (10, 25, 50, 100, or 250 items/cycle)
+4. Click **Upload** or **Download** for manual transfers
 5. Or enable **Auto-Upload/Download** for continuous transfers
+6. Monitor energy cost - higher rates consume more power (10kJ per item)
 
 ### Transferring Fluids
 
@@ -111,10 +114,20 @@ Build your space elevator through 5 construction stages, each requiring material
 
 ## Balance
 
-- **Power:** 10MW constant consumption
+- **Power:** 10MW constant consumption + 10kJ per item transferred
+- **Transfer Rates:** 10/25/50/100/250 items per cycle (every 0.5 seconds)
 - **Launch Cost:** Only 1 rocket part per launch (vs 100 for standard silo)
 - **Construction:** Requires materials from all 4 planets
 - **Technology:** Cryogenic Science Pack required
+
+### Transfer Energy Costs
+| Rate | Energy per Cycle | Items/Second |
+|------|-----------------|--------------|
+| 10   | 100 kJ          | 20           |
+| 25   | 250 kJ          | 50           |
+| 50   | 500 kJ          | 100          |
+| 100  | 1 MJ            | 200          |
+| 250  | 2.5 MJ          | 500          |
 
 ## Tips
 

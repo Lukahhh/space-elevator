@@ -6,7 +6,7 @@ A Factorio 2.0 / Space Age mod that adds space elevators to planets, providing a
 
 **Core Concept:** An expensive, multi-stage construction that acts as a fast, low-cost (or free) rocket silo alternative for late-game players.
 
-**Current Version:** 0.2.2
+**Current Version:** 0.2.3
 
 ---
 
@@ -144,9 +144,11 @@ Stage 5: Activation & Calibration
 ### Bidirectional Item Transfer - COMPLETE
 - [x] Upload items from surface to platform
 - [x] Download items from platform to surface
-- [x] Manual transfer (10 items per click)
+- [x] Manual transfer with configurable rate
 - [x] Automatic transfer modes (continuous upload/download)
-- [x] Transfer tab in elevator GUI
+- [x] Per-elevator transfer rate selector (10/25/50/100/250 items per cycle)
+- [x] Energy cost system (10kJ per item transferred)
+- [x] Transfer tab in elevator GUI with energy display
 
 ### Fluid Transfer - COMPLETE
 - [x] Eliminates need for barreling
@@ -184,7 +186,9 @@ Stage 5: Activation & Calibration
 ### Graphics & Audio
 - [ ] Elevator base sprite (multiple stages)
 - [ ] Tether/cable visual
-- [x] Launch/transfer animation (basic beam effect implemented via LuaRendering)
+- [x] Launch/transfer animation (beam effect via LuaRendering)
+- [x] Beam width scales with transfer rate (visual feedback for transfer volume)
+- [x] Persistent beams during continuous transfers
 - [ ] Ambient operation sounds
 - [ ] Transfer initiation/completion sounds
 
@@ -250,7 +254,7 @@ Stage 5: Activation & Calibration
 ## Implemented File Structure
 
 ```
-space-elevator_0.2.1/
+space-elevator_0.2.3/
 ├── info.json
 ├── data.lua
 ├── control.lua
@@ -331,6 +335,7 @@ space-elevator_0.2.1/
 
 | Date | Version | Changes |
 |------|---------|---------|
+| 2025-11-26 | 0.2.3 | Per-elevator transfer rate selector, energy cost system |
 | 2025-11-26 | 0.2.2 | Phase 5 started - Transfer beam visual effects |
 | 2025-11-26 | 0.2.1 | Bug fixes, fluid UI, dock GUI improvements |
 | 2025-11-26 | 0.2.0 | Phase 4 complete - Docking, transfers, player transport |
