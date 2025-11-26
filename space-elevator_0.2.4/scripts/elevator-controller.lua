@@ -125,14 +125,22 @@ function elevator_controller.activate_elevator(unit_number)
   elevator_data.launch_count = 0
 end
 
--- Spawn companion chest for construction materials
+-- Spawn companion chest for construction materials / cargo
+-- Chest is positioned outside the elevator footprint so inserters can access it
 local function spawn_construction_chest(entity)
   if not entity or not entity.valid then return nil end
 
-  -- Create invisible chest at same position for construction materials
+  -- Rocket silo is ~9x9 tiles. Position chest at the south edge (offset by 6 tiles)
+  -- This puts the chest just outside the silo's collision box for inserter access
+  local chest_position = {
+    x = entity.position.x,
+    y = entity.position.y + 6,  -- South of elevator
+  }
+
+  -- Create visible chest at offset position (inserters can interact)
   local chest = entity.surface.create_entity{
     name = "space-elevator-chest",
-    position = entity.position,
+    position = chest_position,
     force = entity.force,
   }
 

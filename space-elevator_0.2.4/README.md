@@ -28,6 +28,7 @@ Build your space elevator through 5 construction stages, each requiring material
 - **Energy cost** - 10kJ per item transferred (higher rates = more power)
 - **Visual feedback** - Beam width scales with transfer rate
 - 48-slot cargo storage on both ends
+- **Full inserter support** - Visible cargo chest (6 tiles south) for inserter input/output
 
 ### Fluid Transfer
 - Transfer fluids without barreling
@@ -83,6 +84,15 @@ Build your space elevator through 5 construction stages, each requiring material
 5. Or enable **Auto-Upload/Download** for continuous transfers
 6. Monitor energy cost - higher rates consume more power (10kJ per item)
 
+### Using Inserters
+
+The elevator has a visible cargo chest 6 tiles south that supports full inserter automation:
+- **Input inserters:** Point inserters at the cargo chest to deposit items
+- **Output inserters:** Point inserters away from the cargo chest to extract items
+- Works during construction (for materials) and when operational (for cargo)
+- Combine with auto-transfer for fully automated surface-to-platform logistics
+- The cargo chest contents appear in the elevator's GUI Materials/Cargo tab
+
 ### Transferring Fluids
 
 1. **Surface Setup:**
@@ -136,10 +146,13 @@ Build your space elevator through 5 construction stages, each requiring material
 - Fluids don't need barreling - direct pipe-to-pipe transfer
 - Player transport is instant (after 3s countdown) - faster than rockets
 - Connection auto-validates - if platform leaves orbit, it disconnects
+- **Cargo chest is 6 tiles south** - use inserters for automated material delivery or cargo loading
+- **Fluid tank is 6 tiles north** - connect pipes for fluid transfers
 
 ## Known Issues
 
-- Fluid tank position changed in 0.2.1 - existing elevators need rebuilding for fluid access
+- Fluid tank position changed in 0.2.1 - existing elevators from before 0.2.1 need rebuilding for fluid access
+- Cargo chest auto-migrates to new position (6 tiles south) on version upgrade
 - Currently no limit on elevators per planet (balance feature pending)
 - Uses placeholder graphics (rocket silo, steel chest, storage tank)
 

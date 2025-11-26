@@ -1,4 +1,20 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.4
+Date: 2025-11-26
+  Features:
+    - Full inserter support for elevator inventory
+        - Companion chest now spawns 6 tiles south of elevator (visible)
+        - Inserters can deposit AND extract items directly
+        - No sync delay - standard chest behavior
+    - Works during construction (for materials) and when operational (for cargo)
+  Changes:
+    - Companion chest repositioned from hidden (overlapping) to visible (south of elevator)
+    - Chest uses standard steel-chest graphics for visibility
+  Migration:
+    - Existing elevators automatically migrate chest to new position on load
+    - Items are preserved during migration
+
+---------------------------------------------------------------------------------------------------
 Version: 0.2.3
 Date: 2025-11-26
   Features:

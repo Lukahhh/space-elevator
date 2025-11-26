@@ -66,26 +66,22 @@ end
 data:extend({space_elevator})
 
 -- ============================================================================
--- Companion Chest for Construction Materials
+-- Companion Chest for Construction Materials / Cargo
 -- ============================================================================
--- This chest spawns alongside the elevator and holds construction materials
--- without weight limits. It's hidden/integrated into the elevator visually.
+-- This chest spawns 3 tiles south of the elevator and holds construction materials
+-- and cargo items. Visible and accessible by inserters for automation.
 
 local construction_chest = table.deepcopy(data.raw["container"]["steel-chest"])
 construction_chest.name = "space-elevator-chest"
 construction_chest.inventory_size = 48  -- Large inventory for all construction materials
 construction_chest.minable = nil  -- Cannot be mined separately (linked to elevator)
-construction_chest.selectable_in_game = false  -- Not directly selectable
-construction_chest.collision_mask = {layers = {}}  -- No collision (sits inside elevator)
 construction_chest.localised_name = {"entity-name.space-elevator-chest"}
 construction_chest.localised_description = {"entity-description.space-elevator-chest"}
 
--- Make it invisible (we access it through the elevator GUI)
-construction_chest.picture = {
-  filename = "__core__/graphics/empty.png",
-  width = 1,
-  height = 1,
-}
+-- Use steel chest graphics (visible to player, inserters can interact)
+-- Keep default collision_mask and selectable_in_game for normal chest behavior
+construction_chest.icon = "__base__/graphics/icons/steel-chest.png"
+construction_chest.icon_size = 64
 
 data:extend({construction_chest})
 

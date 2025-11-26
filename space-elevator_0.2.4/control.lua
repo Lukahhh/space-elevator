@@ -1092,6 +1092,51 @@ script.on_configuration_changed(function(data)
       elevator_data.transfer_rate = 10  -- Default to 10 items/cycle
     end
   end
+
+  -- Migration: Reposition companion chests from overlapping to south offset (v0.2.4+)
+  for _, elevator_data in pairs(storage.space_elevators) do
+    if elevator_data.entity and elevator_data.entity.valid and elevator_data.chest and elevator_data.chest.valid then
+      local elevator_pos = elevator_data.entity.position
+      local chest_pos = elevator_data.chest.position
+      local expected_chest_y = elevator_pos.y + 6  -- New position: 6 tiles south
+
+      -- Check if chest is at old position (same as elevator, not at south offset)
+      if math.abs(chest_pos.y - elevator_pos.y) < 1 then
+        -- Chest is at old position, needs migration
+        local surface = elevator_data.entity.surface
+        local force = elevator_data.entity.force
+
+        -- Create new chest at correct position
+        local new_chest = surface.create_entity{
+          name = "space-elevator-chest",
+          position = {x = elevator_pos.x, y = expected_chest_y},
+          force = force,
+        }
+
+        if new_chest then
+          new_chest.destructible = false
+
+          -- Transfer items from old chest to new chest
+          local old_inv = elevator_data.chest.get_inventory(defines.inventory.chest)
+          local new_inv = new_chest.get_inventory(defines.inventory.chest)
+          if old_inv and new_inv then
+            for i = 1, #old_inv do
+              local stack = old_inv[i]
+              if stack and stack.valid_for_read then
+                new_inv.insert(stack)
+              end
+            end
+          end
+
+          -- Destroy old chest and update reference
+          elevator_data.chest.destroy()
+          elevator_data.chest = new_chest
+
+          game.print("[Space Elevator] Migrated cargo chest to new position (south of elevator)")
+        end
+      end
+    end
+  end
 end)
 
 -- ============================================================================
