@@ -1,0 +1,15 @@
+{
+  "name": "space-elevator",
+  "version": "0.2.6",
+  "title": "Space Elevator",
+  "author": "Lukah",
+  "contact": "",
+  "homepage": "",
+  "description": "Adds space elevators to planets for fast, efficient item transfer to space platforms. A late-game alternative to rocket launches.",
+  "dependencies": [
+    "base >= 2.0",
+    "space-age >= 2.0",
+    "entity-gui-lib >= 0.1.5"
+  ],
+  "factorio_version": "2.0"
+}
