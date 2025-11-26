@@ -300,16 +300,33 @@ end
 local function get_fluid_info(tank)
   if not tank or not tank.valid then return nil end
   local fluidbox = tank.fluidbox
-  if fluidbox and #fluidbox > 0 then
-    local fluid = fluidbox[1]
-    if fluid then
-      return {
-        name = fluid.name,
-        amount = fluid.amount,
-        temperature = fluid.temperature,
-      }
+  if not fluidbox then return nil end
+
+  -- In Factorio 2.0, fluidbox access may work differently
+  -- Try direct access first
+  local fluid = fluidbox[1]
+  if fluid and fluid.name then
+    return {
+      name = fluid.name,
+      amount = fluid.amount or 0,
+      temperature = fluid.temperature or 15,
+    }
+  end
+
+  -- Fallback: try get_fluid_segment_contents for 2.0 compatibility
+  if fluidbox.get_fluid_segment_contents then
+    local contents = fluidbox.get_fluid_segment_contents(1)
+    if contents and next(contents) then
+      for name, amount in pairs(contents) do
+        return {
+          name = name,
+          amount = amount,
+          temperature = 15,  -- Default temp
+        }
+      end
     end
   end
+
   return nil
 end
 
@@ -332,8 +349,11 @@ function transfer_controller.transfer_fluids_up(elevator_data, amount)
   amount = amount or DEFAULT_FLUID_RATE
 
   local source_fluid = get_fluid_info(source_tank)
-  if not source_fluid or source_fluid.amount <= 0 then
-    return {transferred = 0, fluid_name = nil}
+  if not source_fluid then
+    return {transferred = 0, error = "Elevator tank is empty"}
+  end
+  if source_fluid.amount <= 0 then
+    return {transferred = 0, error = "Elevator tank has no fluid to transfer"}
   end
 
   local to_transfer = math.min(source_fluid.amount, amount)
@@ -358,6 +378,9 @@ function transfer_controller.transfer_fluids_up(elevator_data, amount)
     if elevator_data.entity and elevator_data.entity.valid then
       visual_effects.draw_fluid_upload_beam_both(elevator_data.entity, elevator_data.docked_dock_entity)
     end
+  else
+    -- Destination tank is full
+    return {transferred = 0, error = "Dock tank is full", fluid_name = source_fluid.name}
   end
 
   return {transferred = inserted, fluid_name = source_fluid.name}
@@ -373,7 +396,7 @@ function transfer_controller.transfer_fluids_down(elevator_data, amount)
   local dest_tank = get_elevator_fluid_tank(elevator_data)
 
   if not source_tank then
-    return {transferred = 0, error = "No dock fluid tank nearby"}
+    return {transferred = 0, error = "No dock fluid tank nearby (place within 5 tiles of dock)"}
   end
   if not dest_tank then
     return {transferred = 0, error = "No elevator fluid tank"}
@@ -382,8 +405,11 @@ function transfer_controller.transfer_fluids_down(elevator_data, amount)
   amount = amount or DEFAULT_FLUID_RATE
 
   local source_fluid = get_fluid_info(source_tank)
-  if not source_fluid or source_fluid.amount <= 0 then
-    return {transferred = 0, fluid_name = nil}
+  if not source_fluid then
+    return {transferred = 0, error = "Dock tank is empty"}
+  end
+  if source_fluid.amount <= 0 then
+    return {transferred = 0, error = "Dock tank has no fluid to transfer"}
   end
 
   local to_transfer = math.min(source_fluid.amount, amount)
@@ -408,6 +434,9 @@ function transfer_controller.transfer_fluids_down(elevator_data, amount)
     if elevator_data.entity and elevator_data.entity.valid then
       visual_effects.draw_fluid_download_beam_both(elevator_data.entity, elevator_data.docked_dock_entity)
     end
+  else
+    -- Destination tank is full
+    return {transferred = 0, error = "Elevator tank is full", fluid_name = source_fluid.name}
   end
 
   return {transferred = inserted, fluid_name = source_fluid.name}
