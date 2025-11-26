@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.7
+Date: 2025-11-27
+  Features:
+    - Added audio effects for transfer beams
+        - Looping beam sound plays during active item/fluid transfers
+        - Shutdown sound plays when transfers stop for smooth audio fade-out
+    - Sound volume and timing tuned to prevent clicking artifacts
+
+---------------------------------------------------------------------------------------------------
 Version: 0.2.6
 Date: 2025-11-27
   Changes:
