@@ -297,6 +297,11 @@ function transfer_controller.process_auto_transfers()
       storage.active_transfers[unit_number] = nil
     end
   end
+
+  -- Check all elevators for beam shutdown (plays shutdown sound when transfers stop)
+  if storage.space_elevators then
+    visual_effects.check_all_beam_shutdowns(storage.space_elevators)
+  end
 end
 
 -- ============================================================================

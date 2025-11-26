@@ -164,6 +164,40 @@ dock_fluid_tank.localised_description = {"entity-description.space-elevator-dock
 data:extend({dock_fluid_tank})
 
 -- ============================================================================
+-- Transfer Beam Sound (Audio Effects)
+-- ============================================================================
+-- Looping sound effect played during beam transfers.
+-- Note: Requires beam_sound.ogg in the sounds folder (convert from MP3 using ffmpeg or online tool)
+
+data:extend({
+  -- Looping beam sound - plays during active transfers
+  {
+    type = "sound",
+    name = "space-elevator-beam-sound",
+    filename = "__space-elevator__/sounds/beam_sound.ogg",
+    volume = 0.5,
+    aggregation = {
+      max_count = 3,
+      remove = false,  -- Don't cut off sounds abruptly (prevents clicking)
+      count_already_playing = true,
+      progress_threshold = 0.7,  -- Only count sounds that are 70%+ complete
+    },
+  },
+  -- Shutdown sound - plays when beam stops to mask the loop ending
+  {
+    type = "sound",
+    name = "space-elevator-beam-shutdown",
+    filename = "__space-elevator__/sounds/beam_shutdown.ogg",
+    volume = 0.6,
+    aggregation = {
+      max_count = 2,
+      remove = true,
+      count_already_playing = true,
+    },
+  },
+})
+
+-- ============================================================================
 -- Transfer Beam Animation (Visual Effects)
 -- ============================================================================
 -- Animated lightning beam sprite for item/fluid transfers between

@@ -36,6 +36,8 @@ local BEAM_CONFIG = {
 -- Active beam tracking
 -- storage.active_beams[unit_number][beam_key] = {surface_beam = id, platform_beam = id, ...}
 local BEAM_EXTEND_TTL = 45  -- How long to keep beam alive when transfer continues (~0.75 sec)
+local SOUND_REPLAY_INTERVAL = 150  -- Re-trigger sound every 150 ticks (~2.5 sec) to overlap smoothly with 3.4s sound
+local SOUND_SHUTDOWN_GRACE = 60  -- Wait 60 ticks (~1 sec) after last transfer before playing shutdown
 
 -- ============================================================================
 -- Storage Initialization
@@ -44,6 +46,9 @@ local BEAM_EXTEND_TTL = 45  -- How long to keep beam alive when transfer continu
 function visual_effects.init_storage()
   storage.active_beams = storage.active_beams or {}
   storage.last_beam_time = storage.last_beam_time or {}
+  storage.last_beam_sound = storage.last_beam_sound or {}  -- Track when sound was last played per elevator
+  storage.last_transfer_tick = storage.last_transfer_tick or {}  -- Track when last transfer occurred per elevator
+  storage.beam_shutdown_played = storage.beam_shutdown_played or {}  -- Track if shutdown sound was played
 end
 
 -- ============================================================================
@@ -56,6 +61,50 @@ local function calculate_scale(config, amount)
   -- Scale: 10 items = base scale, 100+ items = max scale
   local t = math.min(1, (amount or 10) / 100)
   return config.base_scale + (config.max_scale - config.base_scale) * t
+end
+
+-- ============================================================================
+-- Sound Effects
+-- ============================================================================
+
+-- Play beam sound at elevator position (with rate limiting to prevent spam)
+local function play_beam_sound(entity, unit_number)
+  if not entity or not entity.valid then return end
+
+  visual_effects.init_storage()
+  local last_sound_tick = storage.last_beam_sound[unit_number] or 0
+  local current_tick = game.tick
+
+  -- Track that a transfer is happening (for shutdown detection)
+  storage.last_transfer_tick[unit_number] = current_tick
+  storage.beam_shutdown_played[unit_number] = false  -- Reset shutdown flag when transferring
+
+  -- Only play sound if enough time has passed since last play
+  if current_tick - last_sound_tick >= SOUND_REPLAY_INTERVAL then
+    entity.surface.play_sound{
+      path = "space-elevator-beam-sound",
+      position = entity.position,
+      volume_modifier = 0.7,
+    }
+    storage.last_beam_sound[unit_number] = current_tick
+  end
+end
+
+-- Play shutdown sound when beam stops (called from check_beam_shutdown)
+local function play_shutdown_sound(surface, position, unit_number)
+  if not surface or not position then return end
+
+  visual_effects.init_storage()
+
+  -- Only play shutdown once per transfer session
+  if storage.beam_shutdown_played[unit_number] then return end
+
+  surface.play_sound{
+    path = "space-elevator-beam-shutdown",
+    position = position,
+    volume_modifier = 0.8,
+  }
+  storage.beam_shutdown_played[unit_number] = true
 end
 
 -- ============================================================================
@@ -300,6 +349,9 @@ local function draw_beam_both(elevator_entity, dock_entity, direction, is_fluid,
       last_tick = game.tick,
     }
   end
+
+  -- Play beam sound effect (rate-limited to prevent spam)
+  play_beam_sound(elevator_entity, unit_number)
 end
 
 -- ============================================================================
@@ -361,6 +413,49 @@ function visual_effects.draw_fluid_download_beam(entity, amount)
 end
 
 -- ============================================================================
+-- Shutdown Detection
+-- ============================================================================
+
+-- Check if an elevator's beam has stopped and play shutdown sound if needed
+-- Called periodically from control.lua
+-- @param elevator_data: The elevator data table (must have entity, unit_number)
+function visual_effects.check_beam_shutdown(elevator_data)
+  if not elevator_data or not elevator_data.entity or not elevator_data.entity.valid then
+    return
+  end
+
+  visual_effects.init_storage()
+
+  local unit_number = elevator_data.unit_number
+  local last_transfer = storage.last_transfer_tick[unit_number]
+
+  -- No transfers recorded yet, nothing to do
+  if not last_transfer then return end
+
+  local current_tick = game.tick
+  local time_since_transfer = current_tick - last_transfer
+
+  -- If enough time has passed since last transfer, play shutdown sound
+  if time_since_transfer >= SOUND_SHUTDOWN_GRACE and not storage.beam_shutdown_played[unit_number] then
+    play_shutdown_sound(
+      elevator_data.entity.surface,
+      elevator_data.entity.position,
+      unit_number
+    )
+  end
+end
+
+-- Check all elevators for shutdown (batch version)
+-- @param elevators: Table of elevator_data indexed by unit_number
+function visual_effects.check_all_beam_shutdowns(elevators)
+  if not elevators then return end
+
+  for _, elevator_data in pairs(elevators) do
+    visual_effects.check_beam_shutdown(elevator_data)
+  end
+end
+
+-- ============================================================================
 -- Cleanup
 -- ============================================================================
 
@@ -376,6 +471,15 @@ function visual_effects.cleanup_elevator(unit_number)
   end
   if storage.last_beam_time then
     storage.last_beam_time[unit_number] = nil
+  end
+  if storage.last_beam_sound then
+    storage.last_beam_sound[unit_number] = nil
+  end
+  if storage.last_transfer_tick then
+    storage.last_transfer_tick[unit_number] = nil
+  end
+  if storage.beam_shutdown_played then
+    storage.beam_shutdown_played[unit_number] = nil
   end
 end
 
