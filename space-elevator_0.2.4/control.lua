@@ -1041,7 +1041,8 @@ local function register_gui()
       on_update = "update_elevator_gui",
       on_close = "close_elevator_gui",
       update_interval = 20,  -- Update every 20 ticks (~3 times/sec)
-      show_player_inventory = true,  -- Shows player inventory panel on the right
+      show_player_inventory = true,
+      player_inventory_position = "left",  -- Vanilla-style layout
     })
 
     -- Register dock GUI
@@ -1054,6 +1055,7 @@ local function register_gui()
       on_close = "close_dock_gui",
       update_interval = 60,  -- Update every second
       show_player_inventory = true,
+      player_inventory_position = "left",  -- Vanilla-style layout
     })
 
     -- Enable debug mode to troubleshoot registration
