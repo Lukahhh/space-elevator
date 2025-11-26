@@ -1,4 +1,12 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.2.5
+Date: 2025-11-27
+  Features:
+    - WIP custom sprites for upload/download transfer beams
+  Bugfixes:
+    - Fixed companion chest and fluid tank not being removed when elevator is mined/destroyed
+
+---------------------------------------------------------------------------------------------------
 Version: 0.2.4
 Date: 2025-11-26
   Features:
