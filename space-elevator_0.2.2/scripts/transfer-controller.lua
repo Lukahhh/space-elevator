@@ -91,8 +91,9 @@ function transfer_controller.transfer_items_up(elevator_data, item_name, amount)
   end
 
   -- Draw upload beam effect on both surface and platform if items were transferred
+  -- Pass total to scale beam width based on transfer amount
   if total > 0 and elevator_data.entity and elevator_data.entity.valid then
-    visual_effects.draw_item_upload_beam_both(elevator_data.entity, elevator_data.docked_dock_entity)
+    visual_effects.draw_item_upload_beam_both(elevator_data.entity, elevator_data.docked_dock_entity, total)
   end
 
   return {transferred = transferred, total = total}
@@ -146,8 +147,9 @@ function transfer_controller.transfer_items_down(elevator_data, item_name, amoun
   end
 
   -- Draw download beam effect on both surface and platform if items were transferred
+  -- Pass total to scale beam width based on transfer amount
   if total > 0 and elevator_data.entity and elevator_data.entity.valid then
-    visual_effects.draw_item_download_beam_both(elevator_data.entity, elevator_data.docked_dock_entity)
+    visual_effects.draw_item_download_beam_both(elevator_data.entity, elevator_data.docked_dock_entity, total)
   end
 
   return {transferred = transferred, total = total}
@@ -375,8 +377,9 @@ function transfer_controller.transfer_fluids_up(elevator_data, amount)
     -- Remove from source
     source_tank.remove_fluid{name = source_fluid.name, amount = inserted}
     -- Draw fluid upload beam effect on both surface and platform
+    -- Pass inserted amount to scale beam width
     if elevator_data.entity and elevator_data.entity.valid then
-      visual_effects.draw_fluid_upload_beam_both(elevator_data.entity, elevator_data.docked_dock_entity)
+      visual_effects.draw_fluid_upload_beam_both(elevator_data.entity, elevator_data.docked_dock_entity, inserted)
     end
   else
     -- Destination tank is full
@@ -431,8 +434,9 @@ function transfer_controller.transfer_fluids_down(elevator_data, amount)
     -- Remove from source
     source_tank.remove_fluid{name = source_fluid.name, amount = inserted}
     -- Draw fluid download beam effect on both surface and platform
+    -- Pass inserted amount to scale beam width
     if elevator_data.entity and elevator_data.entity.valid then
-      visual_effects.draw_fluid_download_beam_both(elevator_data.entity, elevator_data.docked_dock_entity)
+      visual_effects.draw_fluid_download_beam_both(elevator_data.entity, elevator_data.docked_dock_entity, inserted)
     end
   else
     -- Destination tank is full
