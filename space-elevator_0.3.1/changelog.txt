@@ -1,0 +1,187 @@
+---------------------------------------------------------------------------------------------------
+Version: 0.3.1
+Date: 2025-11-29
+  Bugfixes:
+    - Fixed "Entity must be minable when next_upgrade is set" error caused by mod compatibility (thanks Naarkerotics!)
+        - Other mods adding upgrade paths to base storage-tank/steel-chest would break elevator
+        - Companion entities now explicitly clear inherited next_upgrade property
+
+---------------------------------------------------------------------------------------------------
+Version: 0.3.0
+Date: 2025-11-28
+  Features:
+    - Improved Status tab with real-time operational status display
+        - Shows actual elevator state: Uploading, Downloading, Idle, Disconnected, Low Power, etc.
+        - Color-coded status indicator with icon (green/yellow/red)
+        - Status updates automatically every ~0.3 seconds
+    - Automatic fluid transfer mode
+        - New Off/Upload/Download buttons in Fluid Transfer section
+        - Works identically to item auto-transfer
+        - Transfers run every 0.5 seconds when enabled
+    - New mod setting: Auto Fluid Transfer Rate
+        - Separate from manual fluid transfer amount
+        - Configurable from 100 to 10,000 fluid per cycle
+        - Default: 1,000 fluid per cycle
+  Changes:
+    - Fluid upload/download buttons now enable/disable automatically based on tank contents
+    - Item and fluid auto-transfer button styles now update in real-time when clicked
+    - Status tab now shows fluid transfer states (Uploading/Downloading fluids)
+  Technical:
+    - Added get_operational_status() function to elevator-controller for unified status reporting
+    - Auto-transfer button styles refresh in GUI update loop
+    - Cleanup of auto-transfer entries when elevator is removed
+
+---------------------------------------------------------------------------------------------------
+Version: 0.2.9
+Date: 2025-11-27
+  Bugfixes:
+    - Second fix space age tag for mod portal
+
+---------------------------------------------------------------------------------------------------
+Version: 0.2.8
+Date: 2025-11-27
+  Bugfixes:
+    - Fix space age tag for mod portal
+
+---------------------------------------------------------------------------------------------------
+Version: 0.2.7
+Date: 2025-11-27
+  Features:
+    - Added audio effects for transfer beams
+        - Looping beam sound plays during active item/fluid transfers
+        - Shutdown sound plays when transfers stop for smooth audio fade-out
+    - Sound volume and timing tuned to prevent clicking artifacts
+
+---------------------------------------------------------------------------------------------------
+Version: 0.2.6
+Date: 2025-11-27
+  Changes:
+    - Transfer tab now uses two-column layout with Cargo and Fluid sections side by side
+
+---------------------------------------------------------------------------------------------------
+Version: 0.2.5
+Date: 2025-11-27
+  Features:
+    - WIP custom sprites for upload/download transfer beams
+  Bugfixes:
+    - Fixed companion chest and fluid tank not being removed when elevator is mined/destroyed
+
+---------------------------------------------------------------------------------------------------
+Version: 0.2.4
+Date: 2025-11-26
+  Features:
+    - Full inserter support for elevator inventory
+        - Companion chest now spawns 6 tiles south of elevator (visible)
+        - Inserters can deposit AND extract items directly
+        - No sync delay - standard chest behavior
+    - Works during construction (for materials) and when operational (for cargo)
+  Changes:
+    - Companion chest repositioned from hidden (overlapping) to visible (south of elevator)
+    - Chest uses standard steel-chest graphics for visibility
+  Migration:
+    - Existing elevators automatically migrate chest to new position on load
+    - Items are preserved during migration
+
+---------------------------------------------------------------------------------------------------
+Version: 0.2.3
+Date: 2025-11-26
+  Features:
+    - Per-elevator transfer rate selector in Transfer tab
+        - Choose between 10, 25, 50, 100, or 250 items per transfer cycle
+        - Higher rates transfer more items but cost more energy
+        - Beam width scales with transfer rate for visual feedback
+    - Energy cost system for item transfers
+        - Each item transferred costs 10kJ of energy
+        - Energy cost displayed in Transfer tab GUI
+        - Live display of available vs required energy
+        - Transfers skip when energy is insufficient
+  Technical:
+    - Per-elevator transfer_rate storage with save migration
+    - Energy drain happens after transfer based on actual items moved
+    - GUI live refresh includes energy status updates
+
+---------------------------------------------------------------------------------------------------
+Version: 0.2.2
+Date: 2025-11-26
+  Features:
+    - Transfer beam visual effects - colored beams appear when items/fluids are transferred
+        - Surface side: beam shoots upward from elevator into the sky
+        - Platform side: beam shoots up from below, visible in empty space under the platform
+    - Different beam colors for transfer types:
+        - Item upload: Blue
+        - Item download: Orange
+        - Fluid upload: Cyan/teal
+        - Fluid download: Dark orange
+    - Dynamic platform edge detection for accurate beam positioning
+    - Beam width scales with transfer amount (wider beams for more items)
+  Technical:
+    - New visual-effects.lua script module for rendering effects
+    - Platform bottom edge caching (5-second cache) for performance
+    - Beam rendering uses LuaRendering.draw_line with dual-layer effect (outer + inner core)
+    - Persistent beam management - beams stay visible during continuous transfers
+
+---------------------------------------------------------------------------------------------------
+Version: 0.2.1
+Date: 2025-11-26
+  Features:
+    - Debug button to skip construction (for testing) - appears in Construction tab
+    - Fluid transfer UI in Transfer tab with status display and manual transfer buttons
+    - Custom GUI for Space Elevator Dock showing all 48 inventory slots
+  Changes:
+    - Elevator fluid tank now spawns 6 tiles north of elevator (visible, accessible for pipes)
+    - Materials tab now shows interactive inventory when elevator is operational
+    - Improved fluid status messages to distinguish between "no tank" and "empty tank"
+  Bugfixes:
+    - Fixed Materials tab not showing inventory after construction complete
+    - Fixed Factorio 2.0 inventory iteration (get_contents returns array not dictionary)
+    - Fixed dock inventory display only showing 10 slots instead of 48
+    - Fixed fluid transfer buttons not appearing in Transfer tab
+    - Fixed misleading "place Dock Fluid Tank" message when tank was empty
+    - Fixed Transfer tab resetting to Status tab when clicking transfer buttons
+    - Fixed slot counting showing item types instead of actual slots (7 stacks now shows 7, not 1)
+    - Fixed "Only callable on tabbed-pane" GUI crash when opening elevator
+    - Added live updates to Transfer tab inventory/fluid counts without resetting active tab
+
+---------------------------------------------------------------------------------------------------
+Version: 0.2.0
+Date: 2025-11-26
+  Features:
+    - Platform Docking Station - New entity for space platforms to connect with planetary elevators
+    - Bidirectional item transfer between surface and platform (Upload/Download)
+    - Automatic transfer modes (continuous upload or download)
+    - Fluid transfer support via companion fluid tanks (no barreling required)
+    - Player transport between surface and platform (3-second timed travel)
+    - New GUI tabs for operational elevators:
+        - Docking tab for platform selection and connection management
+        - Transfer tab for manual and automatic item transfers
+        - Travel tab for player teleportation between surface and platform
+    - Auto-connect to platforms when only one is orbiting
+    - Manual platform selection when multiple platforms are in orbit
+    - Connection validation - automatically disconnects when platform leaves orbit
+  New Items:
+    - Space Elevator Dock - Place on platforms to enable elevator connection
+    - Dock Fluid Tank - Fluid storage for platform-side transfers
+
+---------------------------------------------------------------------------------------------------
+Version: 0.1.0
+Date: 2025-11-26
+  Features:
+    - Initial release of Space Elevator mod for Factorio 2.0 / Space Age
+    - Custom space elevator entity based on rocket silo (only 1 rocket part per launch vs 100)
+    - 10MW constant power consumption for balanced late-game gameplay
+    - Technology unlock requires Cryogenic Science Pack (all 4 planets visited)
+    - Multi-stage construction system with 5 stages:
+        - Stage 1: Site Preparation (Stone, Concrete, Steel Plate)
+        - Stage 2: Foundation Construction (Refined Concrete, Steel, Gears, Pipes)
+        - Stage 3: Tower Assembly (Processing Units, Electric Engines, LDS, Tungsten, Superconductors, Bioflux)
+        - Stage 4: Tether Deployment (Low Density Structures, Accumulators, Rocket Fuel)
+        - Stage 5: Activation (Processing Units, Superconductors, Rocket Fuel)
+    - Custom GUI powered by entity-gui-lib with three tabs:
+        - Construction tab with stage progress and build timer
+        - Materials tab showing required vs available items with live updates
+        - Info tab with elevator status and launch statistics
+    - Interactive inventory display with click-to-transfer functionality
+    - Player inventory panel alongside entity GUI
+    - Companion chest system (invisible 48-slot chest) to bypass rocket cargo weight limits
+    - Auto-registration for spawned/legacy elevators when GUI is opened
+    - GUI auto-refresh every 20 ticks with automatic rebuild on stage changes
