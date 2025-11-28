@@ -1,4 +1,29 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.0
+Date: 2025-11-28
+  Features:
+    - Improved Status tab with real-time operational status display
+        - Shows actual elevator state: Uploading, Downloading, Idle, Disconnected, Low Power, etc.
+        - Color-coded status indicator with icon (green/yellow/red)
+        - Status updates automatically every ~0.3 seconds
+    - Automatic fluid transfer mode
+        - New Off/Upload/Download buttons in Fluid Transfer section
+        - Works identically to item auto-transfer
+        - Transfers run every 0.5 seconds when enabled
+    - New mod setting: Auto Fluid Transfer Rate
+        - Separate from manual fluid transfer amount
+        - Configurable from 100 to 10,000 fluid per cycle
+        - Default: 1,000 fluid per cycle
+  Changes:
+    - Fluid upload/download buttons now enable/disable automatically based on tank contents
+    - Item and fluid auto-transfer button styles now update in real-time when clicked
+    - Status tab now shows fluid transfer states (Uploading/Downloading fluids)
+  Technical:
+    - Added get_operational_status() function to elevator-controller for unified status reporting
+    - Auto-transfer button styles refresh in GUI update loop
+    - Cleanup of auto-transfer entries when elevator is removed
+
+---------------------------------------------------------------------------------------------------
 Version: 0.2.9
 Date: 2025-11-27
   Bugfixes:

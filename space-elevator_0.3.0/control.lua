@@ -708,6 +708,41 @@ remote.add_interface("space_elevator", {
           enabled = can_download_fluid,
         }
 
+        -- Auto fluid transfer mode
+        fluid_column.add{
+          type = "label",
+          caption = "Automatic Fluid Transfer:",
+          style = "bold_label",
+        }.style.top_margin = 12
+
+        local auto_fluid_config = transfer_controller.get_auto_fluid_transfer(entity.unit_number)
+        local current_fluid_mode = auto_fluid_config and auto_fluid_config.mode or "off"
+
+        local auto_fluid_flow = fluid_column.add{type = "flow", direction = "horizontal"}
+        auto_fluid_flow.style.horizontal_spacing = 4
+
+        auto_fluid_flow.add{
+          type = "button",
+          name = "elevator_auto_fluid_off",
+          caption = "Off",
+          style = current_fluid_mode == "off" and "button" or "tool_button",
+          tooltip = "Disable automatic fluid transfers",
+        }
+        auto_fluid_flow.add{
+          type = "button",
+          name = "elevator_auto_fluid_up",
+          caption = "Upload",
+          style = current_fluid_mode == "up" and "button" or "tool_button",
+          tooltip = "Automatically upload fluids to platform",
+        }
+        auto_fluid_flow.add{
+          type = "button",
+          name = "elevator_auto_fluid_down",
+          caption = "Download",
+          style = current_fluid_mode == "down" and "button" or "tool_button",
+          tooltip = "Automatically download fluids from platform",
+        }
+
         fluid_column.add{
           type = "label",
           caption = "Connect pipes to the fluid tank north of the elevator.",
@@ -942,6 +977,51 @@ remote.add_interface("space_elevator", {
       local dock_fluid_label = find_element(content, "elevator_dock_fluid_label")
       if dock_fluid_label then
         dock_fluid_label.caption = {"", "Platform Tank: ", dock_fluid_text}
+      end
+
+      -- Update fluid transfer button enabled states
+      local fluid_up_button = find_element(content, "elevator_fluid_up")
+      if fluid_up_button then
+        fluid_up_button.enabled = fluid_status.elevator.fluid ~= nil
+      end
+
+      local fluid_down_button = find_element(content, "elevator_fluid_down")
+      if fluid_down_button then
+        fluid_down_button.enabled = fluid_status.dock.fluid ~= nil
+      end
+
+      -- Update item auto-transfer button styles
+      local auto_config = transfer_controller.get_auto_transfer(entity.unit_number)
+      local current_mode = auto_config and auto_config.mode or "off"
+
+      local auto_off_btn = find_element(content, "elevator_auto_off")
+      if auto_off_btn then
+        auto_off_btn.style = current_mode == "off" and "button" or "tool_button"
+      end
+      local auto_up_btn = find_element(content, "elevator_auto_up")
+      if auto_up_btn then
+        auto_up_btn.style = current_mode == "up" and "button" or "tool_button"
+      end
+      local auto_down_btn = find_element(content, "elevator_auto_down")
+      if auto_down_btn then
+        auto_down_btn.style = current_mode == "down" and "button" or "tool_button"
+      end
+
+      -- Update fluid auto-transfer button styles
+      local auto_fluid_config = transfer_controller.get_auto_fluid_transfer(entity.unit_number)
+      local current_fluid_mode = auto_fluid_config and auto_fluid_config.mode or "off"
+
+      local auto_fluid_off_btn = find_element(content, "elevator_auto_fluid_off")
+      if auto_fluid_off_btn then
+        auto_fluid_off_btn.style = current_fluid_mode == "off" and "button" or "tool_button"
+      end
+      local auto_fluid_up_btn = find_element(content, "elevator_auto_fluid_up")
+      if auto_fluid_up_btn then
+        auto_fluid_up_btn.style = current_fluid_mode == "up" and "button" or "tool_button"
+      end
+      local auto_fluid_down_btn = find_element(content, "elevator_auto_fluid_down")
+      if auto_fluid_down_btn then
+        auto_fluid_down_btn.style = current_fluid_mode == "down" and "button" or "tool_button"
       end
 
       -- Update energy display
@@ -1443,6 +1523,29 @@ script.on_event(defines.events.on_gui_click, function(event)
       end
     end
 
+  elseif element.name == "elevator_auto_fluid_off" then
+    local entity = remote.call("entity_gui_lib", "get_entity", event.player_index)
+    if entity and entity.valid then
+      transfer_controller.set_auto_fluid_transfer(entity.unit_number, "off")
+      player.print("[Space Elevator] Automatic fluid transfer disabled")
+    end
+
+  elseif element.name == "elevator_auto_fluid_up" then
+    local entity = remote.call("entity_gui_lib", "get_entity", event.player_index)
+    if entity and entity.valid then
+      local rate = settings.global["space-elevator-auto-fluid-transfer-rate"].value
+      transfer_controller.set_auto_fluid_transfer(entity.unit_number, "up", rate)
+      player.print("[Space Elevator] Auto fluid upload enabled at " .. rate .. " fluid/cycle")
+    end
+
+  elseif element.name == "elevator_auto_fluid_down" then
+    local entity = remote.call("entity_gui_lib", "get_entity", event.player_index)
+    if entity and entity.valid then
+      local rate = settings.global["space-elevator-auto-fluid-transfer-rate"].value
+      transfer_controller.set_auto_fluid_transfer(entity.unit_number, "down", rate)
+      player.print("[Space Elevator] Auto fluid download enabled at " .. rate .. " fluid/cycle")
+    end
+
   elseif element.name == "elevator_travel_up" then
     -- Travel from surface to platform
     local can_travel, elevator_data = player_transport.can_travel_up(player)
@@ -1509,6 +1612,7 @@ end)
 -- Tick handler for automatic item transfers (every 30 ticks = 0.5 seconds)
 script.on_nth_tick(30, function(event)
   transfer_controller.process_auto_transfers()
+  transfer_controller.process_auto_fluid_transfers()
 end)
 
 -- Tick handler for player transit (every 10 ticks for smooth countdown)

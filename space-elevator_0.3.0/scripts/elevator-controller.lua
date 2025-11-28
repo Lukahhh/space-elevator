@@ -416,15 +416,45 @@ function elevator_controller.get_operational_status(elevator_data)
     }
   end
 
-  -- Check auto-transfer mode
+  -- Check auto-transfer mode (items)
   storage.active_transfers = storage.active_transfers or {}
   local transfer_config = storage.active_transfers[elevator_data.unit_number]
 
-  if not transfer_config then
+  -- Check auto-transfer mode (fluids)
+  storage.active_fluid_transfers = storage.active_fluid_transfers or {}
+  local fluid_transfer_config = storage.active_fluid_transfers[elevator_data.unit_number]
+
+  if not transfer_config and not fluid_transfer_config then
     return {
       status = "idle",
       color = {0.7, 0.7, 0.7},  -- Gray
       detail = "Connected, auto-transfer disabled"
+    }
+  end
+
+  -- If only fluid auto-transfer is active
+  if not transfer_config and fluid_transfer_config then
+    if fluid_transfer_config.mode == "up" then
+      return {
+        status = "fluid_uploading",
+        color = {0.2, 0.9, 0.9},  -- Cyan
+        detail = "Uploading fluids to platform"
+      }
+    elseif fluid_transfer_config.mode == "down" then
+      return {
+        status = "fluid_downloading",
+        color = {0.2, 0.9, 0.9},  -- Cyan
+        detail = "Downloading fluids from platform"
+      }
+    end
+  end
+
+  -- Item transfer is active (takes priority in status display)
+  if not transfer_config then
+    return {
+      status = "idle",
+      color = {0.7, 0.7, 0.7},
+      detail = "Ready"
     }
   end
 

@@ -86,6 +86,15 @@ data:extend({
     maximum_value = 10000,
     order = "c-c",
   },
+  {
+    type = "int-setting",
+    name = "space-elevator-auto-fluid-transfer-rate",
+    setting_type = "runtime-global",
+    default_value = 1000,
+    minimum_value = 100,
+    maximum_value = 10000,
+    order = "c-d",
+  },
 
   -- Player Transport
   {

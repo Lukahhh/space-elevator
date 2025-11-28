@@ -11,8 +11,12 @@ local function get_auto_item_rate()
   return settings.global["space-elevator-auto-transfer-rate"].value
 end
 
-local function get_fluid_rate()
+local function get_manual_fluid_rate()
   return settings.global["space-elevator-manual-fluid-transfer"].value
+end
+
+local function get_auto_fluid_rate()
+  return settings.global["space-elevator-auto-fluid-transfer-rate"].value
 end
 
 -- Default fallback rates (used if settings not available)
@@ -305,6 +309,63 @@ function transfer_controller.process_auto_transfers()
 end
 
 -- ============================================================================
+-- Automatic Fluid Transfer Mode
+-- ============================================================================
+
+-- Storage keys for active fluid transfers
+-- storage.active_fluid_transfers[unit_number] = {mode = "up"/"down", rate = number}
+
+function transfer_controller.set_auto_fluid_transfer(unit_number, mode, rate)
+  storage.active_fluid_transfers = storage.active_fluid_transfers or {}
+
+  if mode == "off" or mode == nil then
+    storage.active_fluid_transfers[unit_number] = nil
+  else
+    storage.active_fluid_transfers[unit_number] = {
+      mode = mode,  -- "up" or "down"
+      rate = rate or DEFAULT_FLUID_RATE,
+    }
+  end
+end
+
+function transfer_controller.get_auto_fluid_transfer(unit_number)
+  storage.active_fluid_transfers = storage.active_fluid_transfers or {}
+  return storage.active_fluid_transfers[unit_number]
+end
+
+-- Process automatic fluid transfers (called from on_nth_tick)
+function transfer_controller.process_auto_fluid_transfers()
+  storage.active_fluid_transfers = storage.active_fluid_transfers or {}
+
+  -- Get rate from settings (allows runtime adjustment)
+  local rate = get_auto_fluid_rate()
+
+  for unit_number, config in pairs(storage.active_fluid_transfers) do
+    -- Find elevator data
+    local elevator_data = nil
+    if storage.space_elevators then
+      for _, data in pairs(storage.space_elevators) do
+        if data.unit_number == unit_number then
+          elevator_data = data
+          break
+        end
+      end
+    end
+
+    if elevator_data and elevator_data.is_operational then
+      if config.mode == "up" then
+        transfer_controller.transfer_fluids_up(elevator_data, rate)
+      elseif config.mode == "down" then
+        transfer_controller.transfer_fluids_down(elevator_data, rate)
+      end
+    else
+      -- Remove invalid elevator from auto-transfer
+      storage.active_fluid_transfers[unit_number] = nil
+    end
+  end
+end
+
+-- ============================================================================
 -- Fluid Transfer Functions (Phase 4.5)
 -- ============================================================================
 
@@ -527,12 +588,20 @@ end
 
 function transfer_controller.init_storage()
   storage.active_transfers = storage.active_transfers or {}
+  storage.active_fluid_transfers = storage.active_fluid_transfers or {}
   visual_effects.init_storage()
 end
 
 -- Cleanup visual effects tracking when elevator is removed
 function transfer_controller.cleanup_elevator(unit_number)
   visual_effects.cleanup_elevator(unit_number)
+  -- Also cleanup auto-transfer entries
+  if storage.active_transfers then
+    storage.active_transfers[unit_number] = nil
+  end
+  if storage.active_fluid_transfers then
+    storage.active_fluid_transfers[unit_number] = nil
+  end
 end
 
 return transfer_controller
