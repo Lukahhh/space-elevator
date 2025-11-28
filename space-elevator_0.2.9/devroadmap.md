@@ -322,6 +322,85 @@ space-elevator_0.2.3/
 
 ---
 
+## Future Consideration: Direct Hub Integration
+
+**Status:** Investigated (2025-11-27) - Not yet implemented
+
+### Overview
+
+Currently, the space elevator uses a custom `space-elevator-dock` entity (a 48-slot chest) placed on space platforms. An alternative approach would be to interact directly with the vanilla space platform hub's inventory, eliminating the need for the dock entity entirely.
+
+### Technical Feasibility: CONFIRMED
+
+The Factorio 2.0 API supports direct hub inventory access:
+
+```lua
+-- Get the hub from a platform surface
+local platform = entity.surface.platform  -- LuaSpacePlatform
+local hub = platform and platform.hub      -- The hub entity (can be nil!)
+
+-- Get the hub's inventory
+local hub_inventory = hub:get_inventory(defines.inventory.hub_main)
+
+-- Insert/remove items
+hub_inventory:insert({name = "iron-plate", count = 100})
+hub_inventory:remove({name = "iron-plate", count = 50})
+```
+
+### Key API Elements
+
+| API | Description |
+|-----|-------------|
+| `surface.platform` | Returns `LuaSpacePlatform` if surface is a space platform |
+| `platform.hub` | Returns the hub entity (nil if starter pack not applied or hub destroyed) |
+| `defines.inventory.hub_main` | Inventory constant for hub's main storage |
+| `hub:get_inventory()` | Standard `LuaEntity` method |
+| `inventory:insert()` / `inventory:remove()` | Standard `LuaInventory` methods |
+
+### Architecture Comparison
+
+| Aspect | Current (Dock) | Direct Hub |
+|--------|----------------|------------|
+| Platform entity | `space-elevator-dock` required | None needed |
+| Inventory access | `dock.get_inventory(defines.inventory.chest)` | `hub:get_inventory(defines.inventory.hub_main)` |
+| Player setup | Must place dock on platform | Automatic - just connect |
+| Automation | Inserters at dock location | Inserters at hub (vanilla) |
+| Complexity | Moderate | Simpler |
+
+### Implementation Changes Required
+
+If implementing direct hub integration:
+
+1. **`transfer-controller.lua`**: Change `get_dock_inventory()` to use `hub:get_inventory(defines.inventory.hub_main)`
+2. **`platform-controller.lua`**: Remove dock validation, store hub reference instead
+3. **Remove**: `space-elevator-dock` entity prototype, item, recipe
+4. **GUI**: Update to show hub inventory status instead of dock
+
+### Important Considerations
+
+1. **Hub Availability**: `platform.hub` returns `nil` if:
+   - Starter pack hasn't been applied yet
+   - Hub has been destroyed (platform deletes at end of tick)
+
+2. **Inventory Capacity**: Hub has 65,535 slot limit; cargo bays extend this
+
+3. **User Experience Trade-off**:
+   - Pro: Simpler setup, no extra entity to place
+   - Con: Players may expect a dedicated "landing area" for the elevator
+
+4. **Mod Conflicts**: Direct hub access might conflict with other mods that manipulate hub inventory
+
+### Reference Mods Using This Pattern
+
+- [Hub Extensions](https://github.com/daviscook477/hub-extensions) - Uses `defines.inventory.hub_main`
+- [Hub Inventory Unlocked](https://github.com/Sopel97/hub_inventory_unlocked) - Script-managed hub inventory
+
+### Decision
+
+**TBD** - Keep current dock system for explicit player control, or switch to direct hub integration for simplicity.
+
+---
+
 ## Known Issues / Future Work
 
 1. **Existing elevators need rebuild** - Fluid tank position change requires rebuilding elevator

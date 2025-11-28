@@ -364,6 +364,166 @@ function elevator_controller.on_elevator_launch(event)
 end
 
 -- ============================================================================
+-- Operational Status
+-- ============================================================================
+
+-- Get the current operational status of an elevator for display in GUI
+-- Returns: {status = string, color = {r,g,b}, detail = string or nil}
+function elevator_controller.get_operational_status(elevator_data)
+  if not elevator_data then
+    return {status = "error", color = {1, 0.3, 0.3}, detail = "Invalid elevator data"}
+  end
+
+  local entity = elevator_data.entity
+  if not entity or not entity.valid then
+    return {status = "error", color = {1, 0.3, 0.3}, detail = "Entity invalid"}
+  end
+
+  -- Under construction
+  if not elevator_data.is_operational then
+    if elevator_data.is_constructing then
+      return {
+        status = "constructing",
+        color = {1, 0.8, 0.2},  -- Yellow
+        detail = "Stage " .. (elevator_data.construction_stage or 1) .. " in progress"
+      }
+    else
+      return {
+        status = "awaiting_materials",
+        color = {1, 0.5, 0},  -- Orange
+        detail = "Waiting for construction materials"
+      }
+    end
+  end
+
+  -- Check energy
+  local energy_per_item = 10000  -- 10kJ
+  local has_energy = (entity.energy or 0) >= energy_per_item
+  if not has_energy then
+    return {
+      status = "low_power",
+      color = {1, 0.3, 0.3},  -- Red
+      detail = "Insufficient energy for transfers"
+    }
+  end
+
+  -- Check connection status
+  if elevator_data.connection_status ~= "connected" then
+    return {
+      status = "disconnected",
+      color = {1, 0.5, 0},  -- Orange
+      detail = "No platform connected"
+    }
+  end
+
+  -- Check auto-transfer mode
+  storage.active_transfers = storage.active_transfers or {}
+  local transfer_config = storage.active_transfers[elevator_data.unit_number]
+
+  if not transfer_config then
+    return {
+      status = "idle",
+      color = {0.7, 0.7, 0.7},  -- Gray
+      detail = "Connected, auto-transfer disabled"
+    }
+  end
+
+  -- Get inventory status to determine if transfers are actually happening
+  local chest = elevator_data.chest
+  local dock = elevator_data.docked_dock_entity
+
+  local source_empty = false
+  local dest_full = false
+
+  if transfer_config.mode == "up" then
+    -- Uploading: check if elevator chest is empty
+    if chest and chest.valid then
+      local inv = chest.get_inventory(defines.inventory.chest)
+      if inv and inv.is_empty() then
+        source_empty = true
+      end
+    end
+    -- Check if dock is full
+    if dock and dock.valid then
+      local inv = dock.get_inventory(defines.inventory.chest)
+      if inv and not inv.can_insert({name = "iron-plate", count = 1}) then
+        dest_full = true
+      end
+    end
+
+    if source_empty then
+      return {
+        status = "upload_idle",
+        color = {0.5, 0.8, 1},  -- Light blue
+        detail = "Upload mode - chest empty"
+      }
+    elseif dest_full then
+      return {
+        status = "upload_blocked",
+        color = {1, 0.6, 0.2},  -- Orange
+        detail = "Upload mode - platform dock full"
+      }
+    else
+      return {
+        status = "uploading",
+        color = {0.2, 0.8, 1},  -- Blue
+        detail = "Uploading items to platform"
+      }
+    end
+
+  elseif transfer_config.mode == "down" then
+    -- Downloading: check if dock is empty
+    if dock and dock.valid then
+      local inv = dock.get_inventory(defines.inventory.chest)
+      if inv and inv.is_empty() then
+        source_empty = true
+      end
+    end
+    -- Check if elevator chest is full
+    if chest and chest.valid then
+      local inv = chest.get_inventory(defines.inventory.chest)
+      if inv and not inv.can_insert({name = "iron-plate", count = 1}) then
+        dest_full = true
+      end
+    end
+
+    if source_empty then
+      return {
+        status = "download_idle",
+        color = {1, 0.8, 0.5},  -- Light orange
+        detail = "Download mode - platform dock empty"
+      }
+    elseif dest_full then
+      return {
+        status = "download_blocked",
+        color = {1, 0.6, 0.2},  -- Orange
+        detail = "Download mode - chest full"
+      }
+    else
+      return {
+        status = "downloading",
+        color = {1, 0.6, 0.2},  -- Orange
+        detail = "Downloading items from platform"
+      }
+    end
+
+  elseif transfer_config.mode == "balanced" then
+    return {
+      status = "balanced",
+      color = {0.6, 0.9, 0.6},  -- Light green
+      detail = "Balanced transfer active"
+    }
+  end
+
+  -- Fallback
+  return {
+    status = "idle",
+    color = {0.7, 0.7, 0.7},
+    detail = "Ready"
+  }
+end
+
+-- ============================================================================
 -- Utility Functions
 -- ============================================================================
 

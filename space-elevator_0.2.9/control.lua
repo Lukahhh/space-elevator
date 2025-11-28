@@ -60,23 +60,66 @@ remote.add_interface("space_elevator", {
 
     -- ========== Construction/Status Tab ==========
     if is_complete then
-      -- Operational status
+      -- Operational status header
       tabs.construction.add{
         type = "label",
-        caption = "Space Elevator Operational",
+        caption = "Space Elevator Status",
         style = "caption_label",
       }
 
-      local status_flow = tabs.construction.add{type = "flow", direction = "vertical"}
-      status_flow.style.top_margin = 8
+      -- Get current operational status
+      local op_status = elevator_controller.get_operational_status(elevator_data)
 
-      status_flow.add{
-        type = "label",
-        caption = "Ready to transfer cargo to orbit.",
+      -- Prominent status display frame
+      local status_frame = tabs.construction.add{
+        type = "frame",
+        name = "elevator_status_frame",
+        style = "inside_shallow_frame",
+        direction = "vertical",
+      }
+      status_frame.style.top_margin = 8
+      status_frame.style.padding = 8
+      status_frame.style.horizontally_stretchable = true
+
+      -- Status indicator row with colored background
+      local status_row = status_frame.add{type = "flow", direction = "horizontal"}
+      status_row.style.vertical_align = "center"
+
+      -- Status icon/indicator
+      local status_icon = "utility/status_working"
+      if op_status.status == "uploading" or op_status.status == "downloading" or op_status.status == "balanced" then
+        status_icon = "utility/status_working"
+      elseif op_status.status == "idle" or op_status.status == "upload_idle" or op_status.status == "download_idle" then
+        status_icon = "utility/status_yellow"
+      elseif op_status.status == "disconnected" or op_status.status == "upload_blocked" or op_status.status == "download_blocked" then
+        status_icon = "utility/status_not_working"
+      elseif op_status.status == "low_power" or op_status.status == "error" then
+        status_icon = "utility/status_not_working"
+      end
+
+      status_row.add{
+        type = "sprite",
+        sprite = status_icon,
+        tooltip = op_status.detail,
       }
 
-      status_flow.add{
+      -- Status text label (with dynamic name for updates)
+      local status_label = status_row.add{
         type = "label",
+        name = "elevator_op_status_label",
+        caption = op_status.detail or "Unknown",
+        style = "bold_label",
+      }
+      status_label.style.left_margin = 8
+      status_label.style.font_color = op_status.color
+
+      -- Additional info section
+      local info_flow = tabs.construction.add{type = "flow", direction = "vertical"}
+      info_flow.style.top_margin = 12
+
+      info_flow.add{
+        type = "label",
+        name = "elevator_energy_display",
         caption = {"", "Energy: ", string.format("%.1f MW", (entity.energy or 0) / 1000000)},
       }
     else
@@ -846,6 +889,20 @@ remote.add_interface("space_elevator", {
 
     -- Update Transfer tab labels when operational
     if is_complete then
+      -- Update operational status display
+      local op_status = elevator_controller.get_operational_status(elevator_data)
+      local op_status_label = find_element(content, "elevator_op_status_label")
+      if op_status_label then
+        op_status_label.caption = op_status.detail or "Unknown"
+        op_status_label.style.font_color = op_status.color
+      end
+
+      -- Update energy display on Status tab
+      local energy_display = find_element(content, "elevator_energy_display")
+      if energy_display then
+        energy_display.caption = {"", "Energy: ", string.format("%.1f MW", (entity.energy or 0) / 1000000)}
+      end
+
       local status = transfer_controller.get_inventory_status(elevator_data)
       local fluid_status = transfer_controller.get_fluid_status(elevator_data)
 
