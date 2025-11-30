@@ -66,15 +66,20 @@ function transfer_controller.transfer_items_up(elevator_data, item_name, amount)
   local total = 0
 
   if item_name then
-    -- Transfer specific item
-    local available = source.get_item_count(item_name)
-    local to_transfer = math.min(available, amount)
-    if to_transfer > 0 then
-      local inserted = dest.insert{name = item_name, count = to_transfer}
-      if inserted > 0 then
-        source.remove{name = item_name, count = inserted}
-        transferred[item_name] = inserted
-        total = inserted
+    -- Transfer specific item (iterate through contents to handle quality variants)
+    local contents = source.get_contents()
+    local remaining = amount
+    for _, item in pairs(contents) do
+      if remaining <= 0 then break end
+      if item.name == item_name then
+        local to_transfer = math.min(item.count, remaining)
+        local inserted = dest.insert{name = item.name, count = to_transfer, quality = item.quality}
+        if inserted > 0 then
+          source.remove{name = item.name, count = inserted, quality = item.quality}
+          transferred[item.name] = (transferred[item.name] or 0) + inserted
+          total = total + inserted
+          remaining = remaining - inserted
+        end
       end
     end
   else
@@ -84,9 +89,9 @@ function transfer_controller.transfer_items_up(elevator_data, item_name, amount)
     for _, item in pairs(contents) do
       if remaining <= 0 then break end
       local to_transfer = math.min(item.count, remaining)
-      local inserted = dest.insert{name = item.name, count = to_transfer}
+      local inserted = dest.insert{name = item.name, count = to_transfer, quality = item.quality}
       if inserted > 0 then
-        source.remove{name = item.name, count = inserted}
+        source.remove{name = item.name, count = inserted, quality = item.quality}
         transferred[item.name] = (transferred[item.name] or 0) + inserted
         total = total + inserted
         remaining = remaining - inserted
@@ -122,15 +127,20 @@ function transfer_controller.transfer_items_down(elevator_data, item_name, amoun
   local total = 0
 
   if item_name then
-    -- Transfer specific item
-    local available = source.get_item_count(item_name)
-    local to_transfer = math.min(available, amount)
-    if to_transfer > 0 then
-      local inserted = dest.insert{name = item_name, count = to_transfer}
-      if inserted > 0 then
-        source.remove{name = item_name, count = inserted}
-        transferred[item_name] = inserted
-        total = inserted
+    -- Transfer specific item (iterate through contents to handle quality variants)
+    local contents = source.get_contents()
+    local remaining = amount
+    for _, item in pairs(contents) do
+      if remaining <= 0 then break end
+      if item.name == item_name then
+        local to_transfer = math.min(item.count, remaining)
+        local inserted = dest.insert{name = item.name, count = to_transfer, quality = item.quality}
+        if inserted > 0 then
+          source.remove{name = item.name, count = inserted, quality = item.quality}
+          transferred[item.name] = (transferred[item.name] or 0) + inserted
+          total = total + inserted
+          remaining = remaining - inserted
+        end
       end
     end
   else
@@ -140,9 +150,9 @@ function transfer_controller.transfer_items_down(elevator_data, item_name, amoun
     for _, item in pairs(contents) do
       if remaining <= 0 then break end
       local to_transfer = math.min(item.count, remaining)
-      local inserted = dest.insert{name = item.name, count = to_transfer}
+      local inserted = dest.insert{name = item.name, count = to_transfer, quality = item.quality}
       if inserted > 0 then
-        source.remove{name = item.name, count = inserted}
+        source.remove{name = item.name, count = inserted, quality = item.quality}
         transferred[item.name] = (transferred[item.name] or 0) + inserted
         total = total + inserted
         remaining = remaining - inserted
