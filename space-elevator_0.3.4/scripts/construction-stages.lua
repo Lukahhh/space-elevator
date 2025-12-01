@@ -68,8 +68,8 @@ construction_stages.stages = {
     name = "Tether Deployment",
     description = "Deploy the space tether to reach orbit",
     materials = {
-      -- Using low-density-structure for the tether (carbon composite)
-      {name = "low-density-structure", amount = 1000},
+      -- Using space-elevator-cable for the tether (carbon composite)
+      {name = "space-elevator-cable", amount = 10000},
       -- Accumulators for energy storage along the tether
       {name = "accumulator", amount = 100},
       {name = "rocket-fuel", amount = 500},

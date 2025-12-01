@@ -35,5 +35,15 @@ data:extend({
     place_result = "space-elevator-dock-fluid-tank",
     stack_size = 10,
     weight = 50000,  -- 50kg
+  },
+  {
+    type = "item",
+    name = "space-elevator-cable",
+    icon = "__space-elevator__/graphics/space-elevator-cable.png",
+    icon_size = 64,
+    subgroup = "space-related",
+    order = "d[rocket-parts]-d[space-elevator-cable]",
+    stack_size = 1000,
+    weight = 1 * kg
   }
 })

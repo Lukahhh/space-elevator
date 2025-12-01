@@ -29,13 +29,7 @@ Place the **Space Elevator Construction Kit** on any planet surface to begin con
 
 The elevator requires 5 construction stages, each needing materials from across the galaxy:
 
-| Stage | Name | Key Materials |
-|-------|------|---------------|
-| 1 | Site Preparation | Stone, Concrete, Steel |
-| 2 | Foundation | Refined Concrete, Gears, Pipes |
-| 3 | Tower Assembly | Processing Units, LDS, Tungsten, Superconductors, Bioflux |
-| 4 | Tether Deployment | LDS, Accumulators, Rocket Fuel |
-| 5 | Activation | Processing Units, Superconductors, Rocket Fuel |
+![](https://i.imgur.com/cSvjK4R.png)
 
 Insert materials into the elevator's inventory and click **Begin Construction** for each stage.
 
@@ -185,44 +179,21 @@ Feedback is very welcome! This is an early release and community input helps sha
 
 ---
 
-## Changelog (Recent)
-
-### 0.2.3
-- Per-elevator transfer rate selector (10/25/50/100/250 items per cycle)
-- Energy cost system (10kJ per item transferred)
-- Beam width scales with transfer rate
-- Live energy display in Transfer tab
-
-### 0.2.2
-- Transfer beam visual effects on both surface and platform
-- Different colors for upload/download and item/fluid transfers
-- Dynamic platform edge detection for beam positioning
-
-### 0.2.1
-- Fluid transfer UI improvements
-- Custom dock GUI with full inventory display
-- Various bug fixes
-
-### 0.2.0
-- Platform docking system
-- Bidirectional item/fluid transfer
-- Player transport
-
----
-
 ## Credits
 
 - **Author:** Lukah
 - **Dependencies:** Entity GUI Library
+- **Translations:**
+-    - Russian by **Erofitskiy**
 - **Inspired by:** Factorio Space Age, real-world space elevator concepts
 
 ---
 
 ## Links
 
-- [GitHub Repository](https://github.com/your-repo/space-elevator)
+- [GitHub Repository](https://github.com/Lukahhh/space-elevator)
 - [Entity GUI Library](https://mods.factorio.com/mod/entity-gui-lib)
-- [Bug Reports](https://github.com/your-repo/space-elevator/issues)
+- [Bug Reports](https://github.com/Lukahhh/space-elevator/issues)
 
 ---
 

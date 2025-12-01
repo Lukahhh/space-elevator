@@ -29,7 +29,7 @@ data:extend({
 -- Stage 1 (Site Preparation): Stone, Concrete, Steel
 -- Stage 2 (Foundation): Refined Concrete, Steel, Gears, Pipes
 -- Stage 3 (Tower Assembly): Processing Units, Electric Engines, LDS, Tungsten, Superconductors, Bioflux
--- Stage 4 (Tether Deployment): Carbon Fiber, Supercapacitors, Rocket Fuel
+-- Stage 4 (Tether Deployment): Space elevator cable segments, Supercapacitors, Rocket Fuel
 -- Stage 5 (Activation): Processing Units, Superconductors, Rocket Fuel
 
 -- ============================================================================
@@ -68,5 +68,24 @@ data:extend({
       {type = "item", name = "space-elevator-dock-fluid-tank", amount = 1}
     },
     category = "crafting",
-  }
+  },
+  {
+    type = "recipe",
+    name = "space-elevator-cable",
+    subgroup = "intermediate-product",
+    category = "electromagnetics",
+    enabled = false,
+    energy_required = 100,  -- 100 seconds to craft
+    ingredients = {
+      {type = "item", name = "carbon", amount = 10},
+      {type = "item", name = "carbon-fiber", amount = 2},
+      {type = "item", name = "plastic-bar", amount = 1},
+      {type = "item", name = "superconductor", amount = 1}
+    },
+    results = {
+      {type = "item", name = "space-elevator-cable", amount = 1}
+    },
+    order = "d[rocket-parts]-c[space-elevator-cable]",
+    allow_productivity = true
+   }
 })
