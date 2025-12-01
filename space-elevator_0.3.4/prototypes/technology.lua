@@ -19,6 +19,10 @@ data:extend({
       {
         type = "unlock-recipe",
         recipe = "space-elevator-dock-fluid-tank"
+      },
+      {
+        type = "unlock-recipe",
+        recipe = "space-elevator-cable"
       }
     },
     prerequisites = {

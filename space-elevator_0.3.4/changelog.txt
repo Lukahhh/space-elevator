@@ -33,7 +33,7 @@ Date: 2025-11-30
         - Makes the elevator a true elevator - cargo goes up without needing rocket parts
         - Setting can still be increased via mod settings for added challenge
   Locale:
-    - Added Russian localisation (thanks Overmind_x!)
+    - Added Russian localisation (thanks Erofitskiy!)
 
 ---------------------------------------------------------------------------------------------------
 Version: 0.3.1
