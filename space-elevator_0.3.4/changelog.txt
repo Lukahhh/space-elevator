@@ -1,4 +1,13 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.3.5
+Date: 2025-12-09
+  Bugfixes:
+    - Fixed players entering god mode when opening Space Elevator GUI
+        - Opening the elevator GUI would give players infinite crafting ability
+        - Caused by a bug in entity-gui-lib's player inventory display
+        - Updated entity-gui-lib dependency to 0.1.9 which fixes this issue
+
+---------------------------------------------------------------------------------------------------
 Version: 0.3.4
 Date: 2025-11-30
   Changes:
