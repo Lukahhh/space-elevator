@@ -268,6 +268,53 @@ function platform_controller.try_auto_connect(elevator_data, force)
   end
 end
 
+-- Try to auto-reconnect disconnected elevators when a platform arrives at a planet
+-- Called when on_space_platform_changed_state fires with waiting_at_station state
+function platform_controller.try_auto_reconnect_for_planet(planet_name, force)
+  if not storage.space_elevators then return end
+  if not planet_name or not force then return end
+
+  -- Find all disconnected, operational elevators on this planet
+  for _, elevator_data in pairs(storage.space_elevators) do
+    if elevator_data.is_operational and not platform_controller.is_connected(elevator_data) then
+      local entity = elevator_data.entity
+      if entity and entity.valid and entity.force == force then
+        local elevator_planet = platform_controller.get_planet_for_surface(entity.surface)
+        if elevator_planet == planet_name then
+          -- Try auto-connect
+          local success, count, message = platform_controller.try_auto_connect(elevator_data, force)
+          if success then
+            game.print("[Space Elevator] " .. message)
+          end
+          -- If multiple platforms, don't print error - player can manually select
+        end
+      end
+    end
+  end
+end
+
+-- Handle platform state changes for auto-reconnection
+function platform_controller.on_platform_changed_state(event)
+  local platform = event.platform
+  if not platform or not platform.valid then return end
+
+  -- Check if platform arrived at a station (in orbit around a planet)
+  -- defines.space_platform_state.waiting_at_station = 8
+  if platform.state == defines.space_platform_state.waiting_at_station then
+    local location = platform.space_location
+    if location then
+      local planet_name = location.name
+      local force = platform.force
+
+      -- Check if this platform has a dock
+      if platform_controller.has_dock(platform) then
+        -- Try to auto-reconnect elevators on this planet
+        platform_controller.try_auto_reconnect_for_planet(planet_name, force)
+      end
+    end
+  end
+end
+
 -- ============================================================================
 -- Event Handlers
 -- ============================================================================

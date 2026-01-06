@@ -1646,3 +1646,8 @@ end, {{filter = "name", name = "space-elevator-dock"}})
 script.on_nth_tick(300, function(event)
   platform_controller.validate_connections()
 end)
+
+-- Handle platform state changes for auto-reconnection when platform arrives in orbit
+script.on_event(defines.events.on_space_platform_changed_state, function(event)
+  platform_controller.on_platform_changed_state(event)
+end)
