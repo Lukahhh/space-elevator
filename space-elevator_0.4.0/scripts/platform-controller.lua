@@ -269,6 +269,51 @@ function platform_controller.try_auto_connect(elevator_data, force)
 end
 
 -- ============================================================================
+-- Channel-Based Auto-Reconnect
+-- ============================================================================
+
+-- Attempt to auto-reconnect all disconnected elevators that have a channel set.
+-- Matches elevator channels to dock channels on orbiting platforms.
+function platform_controller.try_auto_reconnect_all()
+  if not storage.space_elevators then return end
+
+  for _, elevator_data in pairs(storage.space_elevators) do
+    -- Skip elevators that are already connected, not operational, or have no channel
+    if not platform_controller.is_connected(elevator_data)
+      and elevator_data.is_operational
+      and elevator_data.channel
+      and elevator_data.channel ~= ""
+    then
+      local entity = elevator_data.entity
+      if entity and entity.valid then
+        local planet_name = platform_controller.get_planet_for_surface(entity.surface)
+        if planet_name then
+          local orbiting = platform_controller.get_orbiting_platforms(planet_name, entity.force)
+
+          for _, p in ipairs(orbiting) do
+            local dock = platform_controller.get_dock(p.platform)
+            if dock and dock.valid then
+              local dock_data = platform_controller.get_dock_data(dock.unit_number)
+              if dock_data
+                and dock_data.channel
+                and dock_data.channel == elevator_data.channel
+                and not dock_data.connected_elevator_unit_number
+              then
+                -- Channel match found and dock is available - connect
+                local success = platform_controller.dock(elevator_data, p.platform)
+                if success then
+                  break  -- This elevator is now connected, move to next
+                end
+              end
+            end
+          end
+        end
+      end
+    end
+  end
+end
+
+-- ============================================================================
 -- Event Handlers
 -- ============================================================================
 
@@ -327,6 +372,7 @@ function platform_controller.on_dock_built(event)
     platform_index = platform.index,
     platform_name = platform.name or "Unnamed Platform",
     connected_elevator_unit_number = nil,
+    channel = "",  -- Channel name for auto-connect matching
   }
 
   game.print("[Space Elevator] Docking station built on " .. (platform.name or "platform"))

@@ -1,4 +1,22 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.0
+Date: 2026-02-16
+  Features:
+    - Channel-based auto-reconnect system
+        - Assign a channel name to elevators and docks (like train station names)
+        - Matching channels auto-connect when a platform arrives in orbit
+        - Empty channel = manual connection only (preserves backward compatibility)
+        - Enables fully automated supply routes across multiple planets
+    - New "Auto-Connect Channel" UI on both elevator Docking tab and Dock GUI
+        - Text input field with Set button to configure channel names
+        - Shows active channel status and auto-reconnect info
+    - Auto-reconnect runs every 5 seconds alongside existing connection validation
+        - Platform departs → elevator disconnects (existing behavior)
+        - Platform returns → elevator auto-reconnects within 5 seconds (new!)
+  Migration:
+    - Existing elevators and docks automatically get empty channel (manual-only) on load
+
+---------------------------------------------------------------------------------------------------
 Version: 0.3.5
 Date: 2025-12-09
   Bugfixes:

@@ -217,6 +217,8 @@ function elevator_controller.register_elevator(entity)
     docked_dock_entity = nil,
     -- Phase 5: Per-elevator transfer rate (items per transfer tick)
     transfer_rate = 10,  -- Default to 10 items per 0.5 second
+    -- Phase 6: Channel-based auto-reconnect
+    channel = "",  -- Channel name for auto-connect matching (empty = manual only)
   }
 
   table.insert(storage.space_elevators, elevator_data)
@@ -276,6 +278,8 @@ function elevator_controller.on_elevator_built(event)
     docked_dock_entity = nil,
     -- Phase 5: Per-elevator transfer rate (items per transfer tick)
     transfer_rate = 10,  -- Default to 10 items per 0.5 second
+    -- Phase 6: Channel-based auto-reconnect
+    channel = "",  -- Channel name for auto-connect matching (empty = manual only)
   })
 
   game.print("[Space Elevator] Construction site established on " .. surface_name .. ". Begin stage 1: Site Preparation")

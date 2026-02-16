@@ -352,6 +352,51 @@ remote.add_interface("space_elevator", {
         style = "caption_label",
       }
 
+      -- Channel input section
+      local channel_flow = tabs.docking.add{type = "flow", direction = "vertical"}
+      channel_flow.style.top_margin = 8
+      channel_flow.style.vertical_spacing = 4
+
+      channel_flow.add{
+        type = "label",
+        caption = {"space-elevator.channel-label"},
+        style = "bold_label",
+      }
+
+      local channel_input_flow = channel_flow.add{type = "flow", direction = "horizontal"}
+      channel_input_flow.style.horizontal_spacing = 8
+      channel_input_flow.style.vertical_align = "center"
+
+      channel_input_flow.add{
+        type = "textfield",
+        name = "elevator_channel_input",
+        text = elevator_data.channel or "",
+        tooltip = {"space-elevator.channel-tooltip"},
+      }
+
+      channel_input_flow.add{
+        type = "button",
+        name = "elevator_channel_set",
+        caption = "Set",
+        style = "tool_button",
+        tooltip = "Save the channel name",
+      }
+
+      -- Show current channel status
+      if elevator_data.channel and elevator_data.channel ~= "" then
+        channel_flow.add{
+          type = "label",
+          name = "elevator_channel_status",
+          caption = {"", "Active channel: ", elevator_data.channel},
+        }.style.font_color = {0.5, 0.8, 1}
+      else
+        channel_flow.add{
+          type = "label",
+          name = "elevator_channel_status",
+          caption = "No channel set - manual connection only",
+        }.style.font_color = {0.7, 0.7, 0.7}
+      end
+
       local dock_flow = tabs.docking.add{type = "flow", direction = "vertical"}
       dock_flow.style.top_margin = 8
       dock_flow.style.vertical_spacing = 4
@@ -373,6 +418,14 @@ remote.add_interface("space_elevator", {
           type = "label",
           caption = {"", "Platform: ", elevator_data.docked_platform_name or "Unknown"},
         }
+
+        -- Show channel info if set
+        if elevator_data.channel and elevator_data.channel ~= "" then
+          dock_flow.add{
+            type = "label",
+            caption = {"", "Channel: ", elevator_data.channel},
+          }.style.font_color = {0.5, 0.8, 1}
+        end
 
         -- Undock button
         local undock_flow = dock_flow.add{type = "flow", direction = "horizontal"}
@@ -455,6 +508,14 @@ remote.add_interface("space_elevator", {
               caption = "Connect",
               tooltip = "Connect to selected platform",
             }
+          end
+
+          -- Show auto-reconnect status
+          if elevator_data.channel and elevator_data.channel ~= "" then
+            dock_flow.add{
+              type = "label",
+              caption = {"", "Will auto-connect when a platform with channel \"", elevator_data.channel, "\" arrives."},
+            }.style.top_margin = 8
           end
         else
           dock_flow.add{
@@ -1115,6 +1176,49 @@ remote.add_interface("space_elevator", {
       end
     end
 
+    -- Channel input section
+    local channel_flow = container.add{type = "flow", direction = "vertical"}
+    channel_flow.style.top_margin = 8
+    channel_flow.style.vertical_spacing = 4
+
+    channel_flow.add{
+      type = "label",
+      caption = {"space-elevator.channel-label"},
+      style = "bold_label",
+    }
+
+    local channel_input_flow = channel_flow.add{type = "flow", direction = "horizontal"}
+    channel_input_flow.style.horizontal_spacing = 8
+    channel_input_flow.style.vertical_align = "center"
+
+    channel_input_flow.add{
+      type = "textfield",
+      name = "dock_channel_input",
+      text = (dock_data and dock_data.channel) or "",
+      tooltip = {"space-elevator.channel-tooltip"},
+    }
+
+    channel_input_flow.add{
+      type = "button",
+      name = "dock_channel_set",
+      caption = "Set",
+      style = "tool_button",
+      tooltip = "Save the channel name",
+    }
+
+    -- Show current channel status
+    if dock_data and dock_data.channel and dock_data.channel ~= "" then
+      channel_flow.add{
+        type = "label",
+        caption = {"", "Active channel: ", dock_data.channel},
+      }.style.font_color = {0.5, 0.8, 1}
+    else
+      channel_flow.add{
+        type = "label",
+        caption = "No channel set - manual connection only",
+      }.style.font_color = {0.7, 0.7, 0.7}
+    end
+
     local status_flow = container.add{type = "flow", direction = "vertical"}
     status_flow.style.top_margin = 8
 
@@ -1124,6 +1228,14 @@ remote.add_interface("space_elevator", {
         caption = "Connected to surface elevator",
       }
       status_label.style.font_color = {0, 1, 0}
+
+      -- Show channel info if set
+      if dock_data and dock_data.channel and dock_data.channel ~= "" then
+        status_flow.add{
+          type = "label",
+          caption = {"", "Channel: ", dock_data.channel},
+        }.style.font_color = {0.5, 0.8, 1}
+      end
     else
       local status_label = status_flow.add{
         type = "label",
@@ -1231,6 +1343,20 @@ script.on_configuration_changed(function(data)
   for _, elevator_data in pairs(storage.space_elevators) do
     if elevator_data.transfer_rate == nil then
       elevator_data.transfer_rate = 10  -- Default to 10 items/cycle
+    end
+  end
+
+  -- Migration: Add channel field to existing elevators (v0.4.0+)
+  for _, elevator_data in pairs(storage.space_elevators) do
+    if elevator_data.channel == nil then
+      elevator_data.channel = ""
+    end
+  end
+
+  -- Migration: Add channel field to existing docks (v0.4.0+)
+  for _, dock_data in pairs(storage.platform_docks or {}) do
+    if dock_data.channel == nil then
+      dock_data.channel = ""
     end
   end
 
@@ -1570,6 +1696,48 @@ script.on_event(defines.events.on_gui_click, function(event)
     else
       player.print("[Space Elevator] Move closer to a dock connected to an elevator to travel")
     end
+
+  elseif element.name == "elevator_channel_set" then
+    -- Set channel on elevator
+    local entity = remote.call("entity_gui_lib", "get_entity", event.player_index)
+    if entity and entity.valid then
+      local elevator_data = elevator_controller.get_elevator_data(entity.unit_number)
+      if elevator_data then
+        -- Find the sibling textfield
+        local textfield = element.parent and element.parent["elevator_channel_input"]
+        if textfield then
+          local channel = textfield.text or ""
+          elevator_data.channel = channel
+          if channel ~= "" then
+            player.print("[Space Elevator] Channel set to: " .. channel)
+          else
+            player.print("[Space Elevator] Channel cleared - manual connection only")
+          end
+          remote.call("entity_gui_lib", "refresh", event.player_index)
+        end
+      end
+    end
+
+  elseif element.name == "dock_channel_set" then
+    -- Set channel on dock
+    local entity = remote.call("entity_gui_lib", "get_entity", event.player_index)
+    if entity and entity.valid then
+      local dock_data = platform_controller.get_dock_data(entity.unit_number)
+      if dock_data then
+        -- Find the sibling textfield
+        local textfield = element.parent and element.parent["dock_channel_input"]
+        if textfield then
+          local channel = textfield.text or ""
+          dock_data.channel = channel
+          if channel ~= "" then
+            player.print("[Space Elevator] Dock channel set to: " .. channel)
+          else
+            player.print("[Space Elevator] Dock channel cleared - manual connection only")
+          end
+          remote.call("entity_gui_lib", "refresh", event.player_index)
+        end
+      end
+    end
   end
 end)
 
@@ -1642,7 +1810,8 @@ script.on_event(defines.events.on_entity_died, function(event)
   platform_controller.on_dock_removed(event)
 end, {{filter = "name", name = "space-elevator-dock"}})
 
--- Periodic connection validation (every 5 seconds)
+-- Periodic connection validation and auto-reconnect (every 5 seconds)
 script.on_nth_tick(300, function(event)
   platform_controller.validate_connections()
+  platform_controller.try_auto_reconnect_all()
 end)
