@@ -1,4 +1,14 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.1
+Date: 2026-02-16
+  Bugfixes:
+    - Fixed dock channel "Set" button silently failing on saves upgraded to 0.4.0
+        - Docks placed before the 0.4.0 update were not registered in the channel system
+        - Clicking "Set" did nothing because the mod had no internal record of the dock
+        - Previously required re-placing the dock to work around the issue
+        - Docks are now auto-registered when their GUI is opened (matches existing elevator behavior)
+
+---------------------------------------------------------------------------------------------------
 Version: 0.4.0
 Date: 2026-02-16
   Features:
