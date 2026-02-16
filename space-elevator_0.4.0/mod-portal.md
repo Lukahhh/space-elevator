@@ -14,6 +14,7 @@ Space Elevator adds a new mega-structure to Factorio 2.0 / Space Age: a planetar
 - **Player transport** - Fast travel between surface and orbit (3 seconds)
 - **Configurable transfer rates** - Choose your throughput (10 to 250 items per cycle)
 - **Visual feedback** - Colored beams indicate active transfers
+- **Channel-based auto-reconnect** - Assign channel names to elevators and docks for automatic reconnection when platforms return to orbit
 
 ---
 
@@ -46,6 +47,16 @@ Build a **Space Elevator Dock** on your space platform while it orbits the plane
 - Single platform? Auto-connects!
 - Multiple platforms? Choose from a dropdown.
 
+**Channel-Based Auto-Reconnect (v0.4.0):**
+
+Assign matching channel names to an elevator and dock (like train station names) and they will automatically reconnect whenever the platform returns to orbit. This enables fully automated supply routes - no manual reconnection needed!
+
+1. Open the elevator's **Docking** tab and type a channel name (e.g., "Vulcanus Atmosphere")
+2. Open the dock on the platform and set the same channel name
+3. When the platform arrives in orbit, the elevator auto-connects within 5 seconds
+
+Leave the channel empty for manual-only connection (default behavior).
+
 ### 4. Transfer Items & Fluids
 
 Use the **Transfer** tab to move cargo:
@@ -61,7 +72,7 @@ Use the **Transfer** tab to move cargo:
 
 ### 5. Player Travel
 
-Use the **Travel** tab to teleport between surface and platform. 3-second travel time, no special equipment needed!
+Use the **Travel** tab to teleport between surface and platform. 3-second travel time, no special equipment needed! (but hold your breath). If you want to get back down to the planet, just hit "enter" on or around the hub on the platform, then drop to the planet like normal.
 
 ---
 
@@ -96,7 +107,7 @@ The mod includes several settings to tailor the experience to your playstyle. Ac
 | Setting | Default | Range | Description |
 |---------|---------|-------|-------------|
 | Power Consumption | 10 MW | 1-100 | Base power draw when operational |
-| Rocket Parts Required | 1 | 1-100 | Parts needed per launch (vanilla silo uses 100) |
+| Rocket Parts Required | 1 | 1-100 | Parts needed per launch (vanilla silo uses 100) (may not be fully implemented, we skipped rockets and just use lasers to beam items and fluids up and down |
 | Fluid Tank Capacity | 25,000 | 1k-100k | Capacity of elevator and dock fluid tanks |
 | Construction Time Multiplier | 1.0x | 0.1-10x | Speed up (0.5) or slow down (2.0) construction |
 | Material Cost Multiplier | 1.0x | 0.1-10x | Reduce (0.5) or increase (2.0) material requirements |
@@ -172,8 +183,6 @@ Feedback is very welcome! This is an early release and community input helps sha
 - Feature suggestions
 - Compatibility issues with other mods
 
-**GitHub Issues:** [Report bugs and suggestions here](https://github.com/your-repo/space-elevator/issues)
-
 ---
 
 ## Known Issues
@@ -186,6 +195,24 @@ Feedback is very welcome! This is an early release and community input helps sha
 ---
 
 ## Changelog (Recent)
+
+### 0.4.0
+- Channel-based auto-reconnect system (assign matching channel names to elevators and docks)
+- Enables fully automated supply routes across multiple planets
+- New "Auto-Connect Channel" UI on Docking tab and Dock GUI
+
+### 0.3.5
+- Fixed players entering god mode when opening Space Elevator GUI
+
+### 0.3.4
+- Space Elevator Dock inventory is now view-only
+
+### 0.3.3
+- Fixed quality items not transferring correctly through the elevator
+
+### 0.3.0
+- Real-time operational status display
+- Automatic fluid transfer mode
 
 ### 0.2.3
 - Per-elevator transfer rate selector (10/25/50/100/250 items per cycle)
@@ -210,19 +237,14 @@ Feedback is very welcome! This is an early release and community input helps sha
 
 ---
 
-## Credits
-
-- **Author:** Lukah
-- **Dependencies:** Entity GUI Library
-- **Inspired by:** Factorio Space Age, real-world space elevator concepts
+## Shoutout
+- alexander02411 for the concept/suggestion
 
 ---
 
 ## Links
 
-- [GitHub Repository](https://github.com/your-repo/space-elevator)
 - [Entity GUI Library](https://mods.factorio.com/mod/entity-gui-lib)
-- [Bug Reports](https://github.com/your-repo/space-elevator/issues)
 
 ---
 
