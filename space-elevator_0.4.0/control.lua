@@ -1164,8 +1164,11 @@ remote.add_interface("space_elevator", {
       style = "caption_label",
     }
 
-    -- Connection status
+    -- Connection status (auto-register untracked docks from older saves or script-placed entities)
     local dock_data = platform_controller.get_dock_data(entity.unit_number)
+    if not dock_data then
+      dock_data = platform_controller.register_dock(entity)
+    end
     local connected_elevator = nil
     if dock_data and dock_data.connected_elevator_unit_number then
       for _, elevator_data in pairs(storage.space_elevators or {}) do
@@ -1723,6 +1726,9 @@ script.on_event(defines.events.on_gui_click, function(event)
     local entity = remote.call("entity_gui_lib", "get_entity", event.player_index)
     if entity and entity.valid then
       local dock_data = platform_controller.get_dock_data(entity.unit_number)
+      if not dock_data then
+        dock_data = platform_controller.register_dock(entity)
+      end
       if dock_data then
         -- Find the sibling textfield
         local textfield = element.parent and element.parent["dock_channel_input"]

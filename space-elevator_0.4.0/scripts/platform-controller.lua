@@ -103,6 +103,34 @@ function platform_controller.get_dock_data(unit_number)
   return storage.platform_docks[unit_number]
 end
 
+-- Register an untracked dock (e.g., from older saves or placed via script)
+function platform_controller.register_dock(entity)
+  if not entity or not entity.valid then return nil end
+  if entity.name ~= "space-elevator-dock" then return nil end
+
+  -- Check if already registered
+  local existing = platform_controller.get_dock_data(entity.unit_number)
+  if existing then return existing end
+
+  local surface = entity.surface
+  if not surface or not surface.valid then return nil end
+
+  local platform = surface.platform
+  if not platform then return nil end
+
+  storage.platform_docks = storage.platform_docks or {}
+
+  storage.platform_docks[entity.unit_number] = {
+    entity = entity,
+    platform_index = platform.index,
+    platform_name = platform.name or "Unnamed Platform",
+    connected_elevator_unit_number = nil,
+    channel = "",
+  }
+
+  return storage.platform_docks[entity.unit_number]
+end
+
 -- ============================================================================
 -- Docking Management
 -- ============================================================================
