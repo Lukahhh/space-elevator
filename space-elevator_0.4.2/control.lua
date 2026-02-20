@@ -1198,7 +1198,7 @@ remote.add_interface("space_elevator", {
       type = "textfield",
       name = "dock_channel_input",
       text = (dock_data and dock_data.channel) or "",
-      tooltip = {"space-elevator.channel-tooltip"},
+      tooltip = {"space-elevator.dock-channel-tooltip"},
     }
 
     channel_input_flow.add{
@@ -1211,9 +1211,10 @@ remote.add_interface("space_elevator", {
 
     -- Show current channel status
     if dock_data and dock_data.channel and dock_data.channel ~= "" then
+      local channel_label_prefix = string.find(dock_data.channel, ",") and "Active channels: " or "Active channel: "
       channel_flow.add{
         type = "label",
-        caption = {"", "Active channel: ", dock_data.channel},
+        caption = {"", channel_label_prefix, dock_data.channel},
       }.style.font_color = {0.5, 0.8, 1}
     else
       channel_flow.add{

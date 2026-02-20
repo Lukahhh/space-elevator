@@ -1,4 +1,16 @@
 ---------------------------------------------------------------------------------------------------
+Version: 0.4.2
+Date: 2026-02-20
+  Features:
+    - Multi-channel dock support
+        - Dock channel field now accepts comma-separated channel names (e.g. 'Atmosphere, Heavy Oil')
+        - A platform visiting multiple planets can match different elevators at each stop
+        - Elevator channels remain single-value (one route endpoint per elevator)
+        - Whitespace-tolerant parsing: 'Atmo, Heavy Oil' and 'Atmo,Heavy Oil' both work
+        - Fully backward compatible: existing single-channel docks work unchanged
+    - Updated dock GUI tooltip to explain comma-separated format
+
+---------------------------------------------------------------------------------------------------
 Version: 0.4.1
 Date: 2026-02-16
   Bugfixes:

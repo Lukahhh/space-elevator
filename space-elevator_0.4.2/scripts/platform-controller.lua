@@ -300,6 +300,21 @@ end
 -- Channel-Based Auto-Reconnect
 -- ============================================================================
 
+-- Check if a single channel name matches a (possibly comma-separated) channel list
+function platform_controller.channel_matches(elevator_channel, dock_channel)
+  if not elevator_channel or elevator_channel == "" then return false end
+  if not dock_channel or dock_channel == "" then return false end
+
+  -- Split dock_channel by comma and trim whitespace
+  for entry in string.gmatch(dock_channel, "[^,]+") do
+    local trimmed = entry:match("^%s*(.-)%s*$")
+    if trimmed == elevator_channel then
+      return true
+    end
+  end
+  return false
+end
+
 -- Attempt to auto-reconnect all disconnected elevators that have a channel set.
 -- Matches elevator channels to dock channels on orbiting platforms.
 function platform_controller.try_auto_reconnect_all()
@@ -324,7 +339,7 @@ function platform_controller.try_auto_reconnect_all()
               local dock_data = platform_controller.get_dock_data(dock.unit_number)
               if dock_data
                 and dock_data.channel
-                and dock_data.channel == elevator_data.channel
+                and platform_controller.channel_matches(elevator_data.channel, dock_data.channel)
                 and not dock_data.connected_elevator_unit_number
               then
                 -- Channel match found and dock is available - connect
